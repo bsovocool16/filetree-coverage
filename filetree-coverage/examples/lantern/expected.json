@@ -1,0 +1,26 @@
+{
+  "_comment": "Files a reviewing attorney would expect each question's answer to draw on. Globs are matched against paths inside the room. These are the reviewer's priors, not the pipeline's output.",
+  "q1": [
+    "03 Material Contracts/*",
+    "04 Intellectual Property/4.03*",
+    "05 Employment/5.02*", "05 Employment/5.03*", "05 Employment/5.05*", "05 Employment/5.06*", "05 Employment/5.07*",
+    "07 Real Estate/7.01*",
+    "09 Insurance/9.02*", "09 Insurance/9.03*",
+    "01 Corporate/1.03*"
+  ],
+  "q2": [
+    "06 Litigation/*",
+    "02 Financial/2.02*",
+    "09 Insurance/9.04*",
+    "08 Regulatory and Environmental/8.03*",
+    "10 Tax/10.03*",
+    "01 Corporate/1.05*"
+  ],
+  "q3": [
+    "08 Regulatory and Environmental/*",
+    "07 Real Estate/7.04*", "07 Real Estate/7.05*",
+    "06 Litigation/6.03*",
+    "09 Insurance/9.02*",
+    "02 Financial/2.04*"
+  ]
+}
