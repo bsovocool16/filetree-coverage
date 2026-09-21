@@ -1,0 +1,10 @@
+{
+  "name": "filetree-coverage",
+  "version": "0.3.1",
+  "description": "Passive coverage map for AI-assisted document review (map a folder, work normally, see which files each answer listed, searched, opened or named, per question and cumulatively) plus a document chronology skill that says which charter, IRA, ROFR, voting agreement or plan is operative today, which amendments layer onto it, and what an amended-and-restated version superseded. Records tool calls; dictates nothing about the search. Every output is a draft for attorney review.",
+  "author": {
+    "name": "Benjamin Sovocool"
+  },
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "repository": "https://github.com/bsovocool16/filetree-coverage"
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "filetree-coverage",
+  "description": "Maps a folder of documents and passively records which files each question's answer listed, searched, opened or named; renders a radial file tree with a per-question and a cumulative view and a list of files nothing ever opened.",
+  "owner": {
+    "name": "Benjamin Sovocool"
+  },
+  "plugins": [
+    {
+      "name": "filetree-coverage",
+      "displayName": "Filetree Coverage",
+      "source": "./filetree-coverage",
+      "description": "Data room coverage for AI-assisted diligence, recorded passively from the session's own tool calls (map, work, show), and a chronology of governing documents that separates amendments from restatements and drafts from operative instruments. Audits of what was touched and what governs, not certificates of completeness.",
+      "author": {
+        "name": "Benjamin Sovocool"
+      }
+    }
+  ]
+}
