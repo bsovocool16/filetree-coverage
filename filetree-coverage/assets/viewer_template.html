@@ -1,0 +1,672 @@
+<title>Data Room Coverage</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #f5f6f3;
+    --surface: #fcfcfb;
+    --surface-2: #f0f1ec;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --hair: #e1e0d9;
+    --axis: #c3c2b7;
+    --link-off: #d9d8d0;
+    --t1: #6ac380;
+    --t2: #3ca95d;
+    --t3: #1f8944;
+    --t4: #09672e;
+    --crit: #d03b3b;
+    --warn: #fab219;
+    --focus: #2a78d6;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+      --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
+      --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
+      --crit: #e06060; --warn: #fab219; --focus: #3987e5;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
+    --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
+    --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
+    --crit: #e06060; --warn: #fab219; --focus: #3987e5;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 14px; line-height: 1.45; }
+  .wrap { padding-block: 20px 40px; padding-inline: 20px; max-width: 1480px; margin: 0 auto; }
+
+  header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 14px; }
+  header.top h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  header.top .meta { color: var(--ink-2); font-size: 13px; }
+  header.top .meta code { font-family: var(--mono); font-size: 12px; color: var(--ink); }
+
+  .questions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .qbtn { font: inherit; color: var(--ink-2); background: var(--surface); border: 1px solid var(--hair); border-radius: 6px; padding: 7px 12px; cursor: pointer; text-align: left; max-width: 100%; display: inline-flex; gap: 10px; align-items: baseline; }
+  .qbtn .n { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .qbtn .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42ch; }
+  .qbtn[aria-pressed="true"] { color: var(--ink); border-color: var(--ink); }
+  .qbtn.all { font-weight: 500; }
+  .qbtn:focus-visible, button:focus-visible, .leaf:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--hair); border-radius: 6px; padding: 10px 12px; }
+  .stat .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .stat .v { font-size: 24px; font-weight: 500; line-height: 1.15; margin-top: 2px; }
+  .stat .v small { font-size: 13px; color: var(--muted); font-weight: 400; }
+  .stat .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+  .stat.gap .v { color: var(--crit); }
+
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+  @media (max-width: 960px) { .main { grid-template-columns: minmax(0, 1fr); } }
+
+  .treebox { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 10px; position: relative; }
+  .treebox svg { width: 100%; height: auto; display: block; max-width: 100%; }
+  .treebox .hint { color: var(--muted); font-size: 12px; padding: 4px 6px 2px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 14px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 6px 4px; font-size: 12px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex: none; }
+  .legend i.hollow { background: var(--surface); border: 1.5px solid var(--axis); }
+  .legend i.diamond { border-radius: 1px; transform: rotate(45deg) scale(0.85); background: var(--warn); border: 1px solid var(--ink-2); }
+  .legend i.ring { background: transparent; border: 2px solid var(--crit); width: 13px; height: 13px; }
+  .legend i.ring.ok { border-color: var(--ink); }
+  .legend i.half { background: conic-gradient(var(--t3) 0 50%, var(--surface) 50% 100%); border: 1.2px solid var(--t3); }
+
+  svg text { font-family: var(--sans); fill: var(--ink-2); }
+  svg .leaf-label { font-size: 10px; fill: var(--ink-2); pointer-events: auto; }
+  svg .leaf-label.exp { fill: var(--ink); font-weight: 500; }
+  svg .leaf-label.dim { fill: var(--muted); }
+  svg .folder-num { font-family: var(--mono); font-size: 9px; fill: var(--ink-2); text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 500; }
+  svg .arc-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); font-weight: 500; }
+  svg .link { fill: none; stroke: var(--link-off); stroke-width: 1; }
+  svg .link.on { stroke-width: 1.5; }
+  svg .link.hi { stroke: var(--ink) !important; stroke-width: 2.2 !important; }
+  svg .folder circle.body { fill: var(--surface); stroke: var(--axis); stroke-width: 1; }
+  svg .folder circle.cov { fill: none; stroke: var(--t3); stroke-width: 2.5; }
+  svg .folder.exp circle.body { stroke: var(--ink); stroke-width: 1.5; }
+  svg .folder, svg .leaf { cursor: pointer; }
+  svg .leaf .hit { fill: transparent; }
+  svg .leaf .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+  svg .leaf .ring.gap { stroke: var(--crit); stroke-width: 2.2; }
+  svg .leaf .mark.t0 { fill: var(--surface); stroke: var(--axis); stroke-width: 1.2; }
+  svg .leaf .mark.t1 { fill: var(--t1); }
+  svg .leaf .mark.t2 { fill: var(--t2); }
+  svg .leaf .mark.t3 { fill: var(--t3); }
+  svg .leaf .mark.t4 { fill: var(--t4); }
+  svg .leaf .mark.part { fill: var(--surface); stroke: var(--t3); stroke-width: 1.2; }
+  svg .leaf .wedge { fill: var(--t3); }
+  svg .leaf .mark.p4 { stroke: var(--t4); }
+  svg .leaf .wedge.w4 { fill: var(--t4); }
+  svg .leaf .named { fill: none; stroke: var(--warn); stroke-width: 1.6; stroke-dasharray: 2 1.5; }
+  .legend i.named { background: transparent; border: 2px dashed var(--warn); width: 13px; height: 13px; }
+  svg .leaf .mark.unindexed { fill: var(--warn); stroke: var(--ink-2); stroke-width: 0.8; }
+  svg .leaf .core { fill: var(--surface); pointer-events: none; }
+  svg .leaf .cnt { font-family: var(--mono); font-size: 7px; fill: var(--ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 500; }
+  svg .root circle { fill: var(--ink); }
+  svg .root text { fill: var(--surface); font-size: 9px; font-family: var(--mono); text-anchor: middle; dominant-baseline: central; font-weight: 500; }
+  svg .link.l1 { stroke: var(--t1); } svg .link.l2 { stroke: var(--t2); } svg .link.l3 { stroke: var(--t3); } svg .link.l4 { stroke: var(--t4); stroke-width: 2; }
+  svg .link.t-folder { stroke: var(--t3); opacity: 0.45; }
+
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); padding: 8px 10px; border-radius: 6px; font-size: 12px; line-height: 1.4; max-width: 300px; z-index: 5; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+  .tip b { font-weight: 600; display: block; margin-bottom: 2px; }
+  .tip .p { font-family: var(--mono); font-size: 11px; opacity: 0.8; word-break: break-all; }
+  .tip .s { margin-top: 4px; }
+
+  aside .card { background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  aside h2 { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; font-weight: 600; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  aside h2 .cnt { font-family: var(--mono); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--ink-2); }
+  .qtext { font-size: 15px; font-weight: 500; line-height: 1.4; text-wrap: balance; margin: 0 0 8px; }
+  .answer { font-size: 13px; color: var(--ink-2); white-space: pre-wrap; margin: 0; max-height: 240px; overflow: auto; padding-right: 4px; font-family: var(--sans); }
+  .answer mark { background: var(--surface-2); color: var(--ink); border-radius: 3px; padding: 0 3px; }
+  .answer.stub { border-left: 3px solid var(--warn); padding-left: 10px; }
+
+  .gaps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .gaps li { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: baseline; font-size: 13px; }
+  .gaps .idx { font-family: var(--mono); font-size: 11px; color: var(--muted); min-width: 4.5ch; }
+  .gaps .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .gaps .nm a { color: inherit; text-decoration: none; cursor: pointer; }
+  .gaps .nm a:hover { text-decoration: underline; }
+  .chip { font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--hair); color: var(--ink-2); white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .chip.t0 i { background: var(--surface); border: 1.2px solid var(--axis); }
+  .chip.t1 i { background: var(--t1); } .chip.t2 i { background: var(--t2); } .chip.t3 i { background: var(--t3); } .chip.t4 i { background: var(--t4); }
+  .chip.unindexed i { background: var(--warn); border-radius: 1px; transform: rotate(45deg) scale(0.85); }
+  .empty { color: var(--muted); font-size: 13px; margin: 0; }
+  .ok { color: var(--ink-2); font-size: 13px; margin: 0; }
+
+  .detail dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 13px; }
+  .detail dt { color: var(--muted); }
+  .detail dd { margin: 0; }
+  .detail .path { font-family: var(--mono); font-size: 11px; word-break: break-all; color: var(--ink-2); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  button.sm { font: inherit; font-size: 12px; color: var(--ink); background: var(--surface-2); border: 1px solid var(--hair); border-radius: 5px; padding: 5px 10px; cursor: pointer; }
+  button.sm:hover { border-color: var(--axis); }
+  textarea { width: 100%; font-family: var(--mono); font-size: 11px; min-height: 90px; border: 1px solid var(--hair); border-radius: 5px; background: var(--surface-2); color: var(--ink); padding: 8px; resize: vertical; }
+  input[type=file] { font: inherit; font-size: 12px; color: var(--ink-2); max-width: 100%; }
+  .err { color: var(--crit); font-size: 12px; margin: 6px 0 0; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
+  details[open] summary { margin-bottom: 8px; }
+  .note { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+
+  .tablebox { margin-top: 14px; background: var(--surface); border: 1px solid var(--hair); border-radius: 8px; padding: 12px 16px; }
+  .tablebox .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--hair); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 500; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  td.file { white-space: normal; min-width: 240px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    svg .link, svg .leaf .mark, svg .leaf .ring { transition: stroke 120ms, stroke-width 120ms, opacity 120ms; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Data Room Coverage</h1>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="questions" id="questions" aria-label="Questions"></div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="main">
+    <section class="treebox" aria-label="Coverage tree">
+      <div class="hint">
+        <span id="hinttext">Each branch is a top-level folder; each leaf is a file. Hover for detail. Click a file or folder to mark it as one you expected the answer to draw on.</span>
+        <span id="modeline"></span>
+      </div>
+      <svg id="tree" viewBox="-600 -600 1200 1200" role="img" aria-label="Radial file tree colored by how far each file was touched"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="tip" id="tip" hidden></div>
+    </section>
+
+    <aside>
+      <div class="card">
+        <h2 id="qhead">Question</h2>
+        <p class="qtext" id="qtext"></p>
+        <pre class="answer" id="answer"></pre>
+      </div>
+      <div class="card">
+        <h2 id="gaphead">Expected but not opened <span class="cnt" id="gapcount"></span></h2>
+        <ul class="gaps" id="gaps"></ul>
+        <p class="note" id="gapnote">Files you marked as germane that were never opened for this question. A file that matched a search but was not opened is the first place to look.</p>
+      </div>
+      <div class="card" id="zerocard" hidden>
+        <h2>Never opened, any question <span class="cnt" id="zerocount"></span></h2>
+        <ul class="gaps" id="zeros"></ul>
+        <p class="note">Files nothing has opened across every question recorded. Marked files come first.</p>
+      </div>
+      <div class="card detail">
+        <h2>File</h2>
+        <div id="detail"><p class="empty">Hover or click a file in the tree.</p></div>
+      </div>
+      <div class="card">
+        <h2>Data</h2>
+        <details id="loadbox">
+          <summary>Load a coverage.json</summary>
+          <input type="file" id="filein" accept=".json,application/json" aria-label="Choose coverage.json">
+          <p class="note">Or paste the JSON:</p>
+          <textarea id="pastein" spellcheck="false" aria-label="Paste coverage.json"></textarea>
+          <div class="actions">
+            <button class="sm" id="loadbtn">Load pasted JSON</button>
+            <button class="sm" id="exportbtn">Show expected marks as JSON</button>
+            <button class="sm" id="clearbtn">Clear my marks for this view</button>
+          </div>
+          <p class="err" id="loaderr"></p>
+        </details>
+        <p class="note" id="datanote"></p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="tablebox">
+    <details>
+      <summary>Table view — every file and its status for this view</summary>
+      <div class="scroll"><table id="table"></table></div>
+    </details>
+  </div>
+</div>
+
+<script id="demo-data" type="application/json">__COVERAGE_JSON__</script>
+<script>
+(function () {
+  'use strict';
+
+  // Tier systems. Passive (hooks) runs declare their own; the older pipeline
+  // format is mapped onto the same four visual slots.
+  const PASSIVE = [
+    { id: 'untouched', label: 'Not touched', slot: 0 },
+    { id: 'listed', label: 'Listed or searched, no hit', slot: 1 },
+    { id: 'hit', label: 'Matched a search', slot: 2 },
+    { id: 'read', label: 'Opened', slot: 3 },
+    { id: 'cited', label: 'Named in the answer', slot: 4 },
+  ];
+  const LEGACY = [
+    { id: 'untouched', label: 'Not retrieved', slot: 0 },
+    { id: 'retrieved', label: 'Retrieved as a candidate, not read', slot: 1 },
+    { id: 'in_context', label: 'Read by the model (in context)', slot: 3 },
+    { id: 'cited', label: 'Cited in the answer', slot: 4 },
+  ];
+  const UNINDEXED = { id: 'unindexed', label: 'Not indexable (no text)', slot: -1 };
+
+  const R_LEAF = 330, R_F1 = 118, R_FMAX = 262, R_ARC = 572, GAP_SLOTS = 1.6;
+
+  let data = null, view = 0 /* index into questions, or 'all' */, tree = null, expected = new Set(), pinned = null;
+  let TIERS = PASSIVE, byId = {}, passive = false;
+
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const natKey = s => s.split(/(\d+)/).map(p => /^\d+$/.test(p) ? p.padStart(8, '0') : p.toLowerCase()).join('');
+  const P = (a, r) => [r * Math.sin(a), -r * Math.cos(a)];
+  const deg = a => a * 180 / Math.PI;
+  const strip = n => n.replace(/\.[A-Za-z0-9]{1,5}$/, '');
+  const isAll = () => view === 'all';
+  const q = () => isAll() ? null : data.questions[view];
+  const pct = (a, b) => b ? Math.round(100 * a / b) + '%' : '—';
+
+  function setTiers() {
+    passive = data.mode === 'passive' || !!data.tiers;
+    TIERS = passive ? PASSIVE : LEGACY;
+    if (data.tiers) TIERS = TIERS.map(t => { const d = data.tiers.find(x => x.id === t.id); return d ? { ...t, label: d.label } : t; });
+    byId = {}; TIERS.forEach(t => byId[t.id] = t); byId.unindexed = UNINDEXED;
+  }
+  const slotOf = id => (byId[id] || byId.untouched).slot;
+  const labelOf = id => (byId[id] || byId.untouched).label;
+  const READ_SLOT = 3;
+
+  // per-file info for the current view
+  function info(path) {
+    if (isAll()) return (data.cumulative && data.cumulative.files[path]) || null;
+    return (q().files && q().files[path]) || null;
+  }
+  function tierOf(leaf) {
+    if (leaf.file.indexed === false) return 'unindexed';
+    const fi = info(leaf.path);
+    return fi ? fi.tier : 'untouched';
+  }
+  const isRead = t => slotOf(t) >= READ_SLOT;
+  function fractionOf(leaf) {
+    const fi = info(leaf.path); if (!fi) return null;
+    if (isAll()) return fi.max_read_fraction == null ? null : fi.max_read_fraction;
+    return fi.read_fraction == null ? null : fi.read_fraction;
+  }
+  const storeKey = () => `vdrcov:expected:${data.vdr_root}:${isAll() ? 'all' : q().id}`;
+
+  // ---------- tree ----------
+  function buildTree() {
+    const root = { name: data.vdr_root, path: '', depth: 0, children: [], leaf: false, idx: '' };
+    const map = { '': root };
+    const files = [...data.files].sort((a, b) => natKey(a.path) < natKey(b.path) ? -1 : 1);
+    for (const f of files) {
+      const parts = f.path.split('/');
+      let cur = root, p = '';
+      for (let i = 0; i < parts.length - 1; i++) {
+        p = p ? p + '/' + parts[i] : parts[i];
+        if (!map[p]) { const n = { name: parts[i], path: p, depth: i + 1, children: [], leaf: false, parent: cur }; cur.children.push(n); map[p] = n; }
+        cur = map[p];
+      }
+      cur.children.push({ name: parts[parts.length - 1], path: f.path, depth: parts.length, leaf: true, file: f, parent: cur });
+    }
+    (function number(n, prefix) {
+      n.children.forEach((c, i) => {
+        const m = c.name.match(/^(\d+(?:\.\d+)*)\b/);
+        c.idx = m ? m[1] : (prefix ? prefix + '.' : '') + String(i + 1).padStart(2, '0');
+        if (!c.leaf) number(c, c.idx);
+      });
+    })(root, '');
+    const leaves = [], top = root.children;
+    const nLeaves = countLeaves(root);
+    const da = 2 * Math.PI / (nLeaves + GAP_SLOTS * top.length);
+    let a = 0, maxFolderDepth = 1;
+    (function place(n) {
+      if (n.leaf) { n.a = a + da / 2; a += da; n.r = R_LEAF; leaves.push(n); return; }
+      if (n.depth > 0) maxFolderDepth = Math.max(maxFolderDepth, n.depth);
+      const a0 = a; n.children.forEach(place);
+      n.a0 = a0 + da / 2; n.a1 = a - da / 2; n.a = (n.a0 + n.a1) / 2;
+      if (n.depth === 1) a += GAP_SLOTS * da;
+    })(root);
+    const stepF = maxFolderDepth > 1 ? (R_FMAX - R_F1) / (maxFolderDepth - 1) : 0;
+    (function radius(n) { if (!n.leaf) { n.r = n.depth === 0 ? 0 : R_F1 + (n.depth - 1) * stepF; n.children.forEach(radius); } })(root);
+    root.a = 0;
+    tree = { root, leaves, da, map };
+  }
+  function countLeaves(n) { return n.leaf ? 1 : n.children.reduce((s, c) => s + countLeaves(c), 0); }
+  function allLeaves(n, out = []) { if (n.leaf) out.push(n); else n.children.forEach(c => allLeaves(c, out)); return out; }
+  function linkPath(n) {
+    const p = n.parent, [x0, y0] = P(p.a, p.r), [x1, y1] = P(n.a, n.r);
+    if (p.depth === 0) return `M${x0},${y0}L${x1},${y1}`;
+    const rm = (p.r + n.r) / 2, [c0x, c0y] = P(p.a, rm), [c1x, c1y] = P(n.a, rm);
+    return `M${x0},${y0}C${c0x},${c0y} ${c1x},${c1y} ${x1},${y1}`;
+  }
+  function wedgePath(r, frac) {
+    const a = 2 * Math.PI * Math.max(0.02, Math.min(0.98, frac));
+    const [x, y] = P(a, r);
+    return `M0,0L0,${-r}A${r},${r} 0 ${a > Math.PI ? 1 : 0} 1 ${x.toFixed(2)},${y.toFixed(2)}Z`;
+  }
+
+  // ---------- render ----------
+  function render() {
+    const svg = $('tree');
+    const leafSlot = R_LEAF * tree.da;
+    const showLabels = leafSlot >= 11;
+    const fs = Math.max(7, Math.min(10.5, leafSlot * 0.36));
+    const maxChars = Math.floor((R_ARC - R_LEAF - 30) / (fs * 0.56));
+    const out = [];
+    const covOf = n => { const ls = allLeaves(n); return { read: ls.filter(l => isRead(tierOf(l))).length, total: ls.length }; };
+
+    (function links(n) {
+      for (const c of n.children) {
+        let cls = 'link';
+        if (c.leaf) { const s = slotOf(tierOf(c)); if (s >= 1) cls += ' on l' + s; }
+        else if (covOf(c).read > 0) cls += ' on t-folder';
+        out.push(`<path class="${cls}" data-link="${esc(c.path)}" d="${linkPath(c)}"/>`);
+        if (!c.leaf) links(c);
+      }
+    })(tree.root);
+
+    tree.root.children.forEach((f, i) => {
+      if (f.leaf) return;
+      const bottom = f.a > Math.PI / 2 && f.a < 3 * Math.PI / 2;
+      const r = bottom ? R_ARC + 8 : R_ARC;
+      const [sx, sy] = P(bottom ? f.a1 : f.a0, r), [ex, ey] = P(bottom ? f.a0 : f.a1, r);
+      const large = (f.a1 - f.a0) > Math.PI ? 1 : 0, id = 'arc' + i;
+      out.push(`<path id="${id}" fill="none" stroke="none" d="M${sx},${sy}A${r},${r} 0 ${large} ${bottom ? 0 : 1} ${ex},${ey}"/>`);
+      let label = f.name.toUpperCase();
+      const cap = Math.floor(r * (f.a1 - f.a0) / (11 * 0.72));
+      if (label.length > cap) label = cap > 6 ? label.slice(0, cap - 1) + '…' : f.idx;
+      out.push(`<text class="arc-label"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${esc(label)}</textPath></text>`);
+    });
+
+    (function folders(n) {
+      for (const c of n.children) {
+        if (c.leaf) continue;
+        const [x, y] = P(c.a, c.r), rr = c.depth === 1 ? 12 : 9, cov = covOf(c), circ = 2 * Math.PI * (rr + 3);
+        const allExp = allLeaves(c).every(l => expected.has(l.path));
+        out.push(`<g class="folder${allExp ? ' exp' : ''}" data-path="${esc(c.path)}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c.name)}, ${cov.read} of ${cov.total} files opened">` +
+          `<circle class="body" r="${rr}"/>` +
+          (cov.read ? `<circle class="cov" r="${rr + 3}" transform="rotate(-90)" stroke-dasharray="${(cov.read / cov.total * circ).toFixed(2)} ${circ.toFixed(2)}"/>` : '') +
+          `<text class="folder-num" style="font-size:${c.depth === 1 ? 9 : 7.5}px">${esc(c.idx)}</text></g>`);
+        folders(c);
+      }
+    })(tree.root);
+
+    for (const l of tree.leaves) {
+      const t = tierOf(l), s = slotOf(t), [x, y] = P(l.a, l.r);
+      const isExp = expected.has(l.path), gap = isExp && !isRead(t);
+      const scale = Math.min(1, leafSlot / 13);
+      const rMark = ({ 4: 6, 3: 5.5, 2: 5, 1: 5, 0: 4.5, '-1': 5 })[s] * scale;
+      const frac = fractionOf(l);
+      let mark;
+      if (t === 'unindexed') mark = `<rect class="mark unindexed" x="${-rMark * 0.92}" y="${-rMark * 0.92}" width="${rMark * 1.84}" height="${rMark * 1.84}" transform="rotate(45)"/>`;
+      else if (s >= 3 && frac != null && frac < 0.97) mark = `<circle class="mark part${s === 4 ? ' p4' : ''}" r="${rMark}"/><path class="wedge${s === 4 ? ' w4' : ''}" d="${wedgePath(rMark, frac)}"/>` + (s === 4 ? `<circle class="core" r="1.6"/>` : '');
+      else mark = `<circle class="mark t${s}" r="${rMark}"/>` + (s === 4 ? `<circle class="core" r="1.9"/>` : '');
+      const fiN = info(l.path);
+      const namedUnopened = fiN && (isAll() ? fiN.q_named_unopened > 0 : fiN.named_unopened);
+      if (namedUnopened) mark += `<circle class="named" r="${rMark + 2.2}"/>`;
+      let cnt = '';
+      if (isAll()) { const fi = info(l.path); if (fi && fi.q_read > 1) cnt = `<text class="cnt" x="${rMark + 6}" y="0">${fi.q_read}</text>`; }
+      const ring = isExp ? `<circle class="ring${gap ? ' gap' : ''}" r="${rMark + 4}"/>` : '';
+      const th = deg(l.a) - 90, flip = th > 90 && th < 270 || th < -90;
+      let label = '';
+      if (showLabels) {
+        let txt = strip(l.name); if (txt.length > maxChars) txt = txt.slice(0, maxChars - 1) + '…';
+        label = `<text class="leaf-label${isExp ? ' exp' : ''}${s <= 0 && !isExp ? ' dim' : ''}" style="font-size:${fs}px" transform="rotate(${th.toFixed(2)}) translate(${R_LEAF + 12},0)${flip ? ' rotate(180)' : ''}" text-anchor="${flip ? 'end' : 'start'}" dominant-baseline="central">${esc(txt)}</text>`;
+      }
+      out.push(`<g class="leaf" data-path="${esc(l.path)}" tabindex="0" role="button" aria-label="${esc(l.name)}: ${labelOf(t)}${isExp ? ', expected' : ''}">` +
+        `<g transform="translate(${x},${y})"><circle class="hit" r="${Math.max(9, leafSlot / 2)}"/>${ring}${mark}${cnt}</g>${label}</g>`);
+    }
+    out.push(`<g class="root"><circle r="16"/><text>VDR</text></g>`);
+    svg.innerHTML = out.join('');
+    $('modeline').textContent = showLabels ? '' : 'Labels hidden at this density — hover a file to read its name.';
+  }
+
+  function renderLegend() {
+    const parts = [];
+    for (const t of [...TIERS].reverse()) {
+      if (t.slot === 0) parts.push(`<span><i class="hollow"></i>${esc(t.label)}</span>`);
+      else parts.push(`<span><i style="background:var(--t${t.slot})"></i>${esc(t.label)}</span>`);
+      if (t.slot === 3 && passive) parts.push(`<span><i class="half"></i>Opened in part (wedge = share read)</span>`);
+    }
+    if (data.files.some(f => f.indexed === false)) parts.push(`<span><i class="diamond"></i>${esc(UNINDEXED.label)}</span>`);
+    if (passive) parts.push(`<span><i class="named"></i>Named in the answer but never opened</span>`);
+    parts.push(`<span><i class="ring ok"></i>Expected, and opened</span><span><i class="ring"></i>Expected, not opened</span>`);
+    $('legend').innerHTML = parts.join('');
+  }
+
+  function renderQuestions() {
+    const box = $('questions');
+    let html = data.questions.map((qq, i) => `<button class="qbtn" aria-pressed="${view === i}" data-v="${i}"><span class="n">${esc(qq.id.toUpperCase())}</span><span class="t">${esc(qq.question)}</span></button>`).join('');
+    if (data.cumulative) html += `<button class="qbtn all" aria-pressed="${isAll()}" data-v="all"><span class="n">ALL</span><span class="t">Every question, cumulative</span></button>`;
+    box.innerHTML = html;
+  }
+
+  function renderStats() {
+    const ls = tree.leaves, tiers = ls.map(tierOf), n = ls.length;
+    const exp = ls.filter(l => expected.has(l.path)), expRead = exp.filter(l => isRead(tierOf(l))).length, gaps = exp.length - expRead;
+    const cnt = slot => tiers.filter(t => slotOf(t) >= slot).length;
+    const tiles = [];
+    if (passive) {
+      tiles.push(['Files in room', `${n}`, isAll() ? `<small>${data.cumulative.summary.questions} questions</small>` : '', null]);
+      tiles.push([isAll() ? 'Ever listed' : 'Listed or searched', `${cnt(1)}`, `<small>${pct(cnt(1), n)}</small>`, 'var(--t1)']);
+      tiles.push([isAll() ? 'Ever matched' : 'Matched a search', `${cnt(2)}`, `<small>${pct(cnt(2), n)}</small>`, 'var(--t2)']);
+      tiles.push([isAll() ? 'Ever opened' : 'Opened', `${cnt(3)}`, `<small>${pct(cnt(3), n)}</small>`, 'var(--t3)']);
+      tiles.push([isAll() ? 'Ever named' : 'Named in answer', `${cnt(4)}`, '', 'var(--t4)']);
+      const nu = ls.filter(l => { const fi = info(l.path); return fi && (isAll() ? fi.q_named_unopened > 0 : fi.named_unopened); }).length;
+      if (nu) tiles.push(['Named, not opened', `${nu}`, '<small>check these</small>', 'var(--warn)', true]);
+      if (isAll()) tiles.push(['Never touched', `${tiers.filter(t => t === 'untouched').length}`, `<small>${pct(tiers.filter(t => t === 'untouched').length, n)}</small>`, null]);
+    } else {
+      const indexed = tiers.filter(t => t !== 'unindexed').length;
+      tiles.push(['Files in room', `${n}`, `<small>${indexed} indexable</small>`, null]);
+      tiles.push(['Retrieved', `${cnt(1)}`, `<small>${pct(cnt(1), indexed)}</small>`, 'var(--t1)']);
+      tiles.push(['Read by model', `${cnt(3)}`, `<small>${pct(cnt(3), indexed)}</small>`, 'var(--t3)']);
+      tiles.push(['Cited', `${cnt(4)}`, '', 'var(--t4)']);
+    }
+    tiles.push(['Expected, opened', `${expRead}<small>/${exp.length}</small>`, '', null]);
+    tiles.push(['Expected, missed', `${gaps}`, exp.length ? `<small>${pct(gaps, exp.length)}</small>` : `<small>mark files to check</small>`, null, gaps > 0]);
+    $('stats').innerHTML = tiles.map(([k, v, s, sw, isGap]) => `<div class="stat${isGap ? ' gap' : ''}"><div class="k">${sw ? `<span class="sw" style="background:${sw}"></span>` : ''}${k}</div><div class="v">${v} ${s}</div></div>`).join('');
+  }
+
+  function markNames(answer, files) {
+    let html = esc(answer);
+    const names = [];
+    for (const f of files) { const stem = strip(f.split('/').pop()); const m = stem.match(/^(\d+(?:\.\d+)*)\s+(.*)$/); names.push(stem); if (m) { names.push(m[1]); if (m[2].length >= 12) names.push(m[2]); } }
+    names.sort((a, b) => b.length - a.length);
+    for (const nm of names) {
+      if (nm.length < 4) continue;
+      const re = new RegExp((/^[\d.]+$/.test(nm) ? '(?<![\\d.])' : '') + nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + (/^[\d.]+$/.test(nm) ? '(?![\\d.])' : ''), 'gi');
+      html = html.replace(re, m => `<mark>${m}</mark>`);
+    }
+    return html;
+  }
+
+  function renderPanel() {
+    const gapsUl = $('gaps'), zero = $('zerocard');
+    if (isAll()) {
+      $('qhead').textContent = 'Every question';
+      $('qtext').textContent = `${data.cumulative.summary.questions} question${data.cumulative.summary.questions === 1 ? '' : 's'} recorded against this room.`;
+      const ans = $('answer'); ans.className = 'answer';
+      ans.innerHTML = data.questions.map((qq, i) => `${esc(qq.id.toUpperCase())}  ${esc(qq.question.slice(0, 160))}${qq.question.length > 160 ? '…' : ''}  — opened ${qq.summary.files_read ?? qq.summary.files_in_context ?? 0}, named ${qq.summary.files_cited}`).join('\n');
+      $('gaphead').firstChild.textContent = 'Expected, never opened ';
+      $('gapnote').textContent = 'Files you marked as germane that no question ever opened.';
+      zero.hidden = false;
+      const zeros = tree.leaves.filter(l => tierOf(l) === 'untouched' || tierOf(l) === 'unindexed' || !isRead(tierOf(l)));
+      const never = tree.leaves.filter(l => !isRead(tierOf(l)));
+      never.sort((a, b) => (expected.has(b.path) - expected.has(a.path)) || (natKey(a.path) < natKey(b.path) ? -1 : 1));
+      $('zerocount').textContent = `${never.length} of ${tree.leaves.length}`;
+      $('zeros').innerHTML = never.length ? never.slice(0, 80).map(l => row(l)).join('') + (never.length > 80 ? `<li><p class="empty">… and ${never.length - 80} more (see the table)</p></li>` : '') : `<li><p class="ok">Every file has been opened at least once.</p></li>`;
+    } else {
+      const qq = q();
+      $('qhead').textContent = 'Question';
+      $('qtext').textContent = qq.question;
+      const ans = $('answer');
+      const isStub = /^STUB/.test(qq.answer || '');
+      ans.className = 'answer' + (isStub ? ' stub' : '');
+      if (qq.excerpts && qq.excerpts.length) {
+        const exMap = {}; qq.excerpts.forEach(e => { exMap[e.n] = e.file; });
+        ans.innerHTML = esc(qq.answer || '(no answer recorded)').replace(/\[\[(\d+)\]\]/g, (m, n) => { const f = exMap[n]; return `<mark title="${esc(f || '')}">${f ? esc(strip(f.split('/').pop())) : 'excerpt ' + n}</mark>`; });
+      } else {
+        const cited = Object.entries(qq.files || {}).filter(([p, d]) => d.tier === 'cited').map(([p]) => p);
+        ans.innerHTML = qq.answer ? markNames(qq.answer, cited) : '<span class="empty">(no answer recorded for this prompt — the turn may still be running, or the Stop hook did not fire)</span>';
+      }
+      $('gaphead').firstChild.textContent = 'Expected but not opened ';
+      $('gapnote').textContent = 'Files you marked as germane that were never opened for this question. A file that matched a search but was not opened is the first place to look.';
+      zero.hidden = true;
+    }
+    const gaps = tree.leaves.filter(l => expected.has(l.path) && !isRead(tierOf(l)));
+    $('gapcount').textContent = expected.size ? `${gaps.length} of ${expected.size}` : '';
+    if (!expected.size) gapsUl.innerHTML = `<li><p class="empty">No files marked yet. Click files or folders in the tree.</p></li>`;
+    else if (!gaps.length) gapsUl.innerHTML = `<li><p class="ok">Every file you marked was opened.</p></li>`;
+    else gapsUl.innerHTML = gaps.map(row).join('');
+
+    const p = data.pipeline || {};
+    const collector = p.collector || (p.retriever ? `retriever ${p.retriever}, top ${p.k_retrieved} chunks, ${p.k_context} in context · ${p.generator || ''}` : '');
+    $('meta').innerHTML = `<code>${esc(data.vdr_root || 'room')}</code> · ${data.questions.length} question${data.questions.length === 1 ? '' : 's'}${p.events ? ' · ' + p.events + ' events' : ''} · ${esc(collector)}${data.generated_at ? ' · ' + esc(String(data.generated_at).replace('T', ' ').slice(0, 16)) : ''}`;
+  }
+  function row(l) {
+    const t = tierOf(l), s = t === 'unindexed' ? 'unindexed' : 't' + slotOf(t);
+    return `<li><span class="idx">${esc(l.idx)}</span><span class="nm"><a data-path="${esc(l.path)}" title="${esc(l.path)}">${esc(strip(l.name).replace(/^\d+(\.\d+)*\s*/, ''))}</a></span><span class="chip ${s}"><i></i>${labelOf(t)}</span></li>`;
+  }
+
+  function fracText(fi, f) {
+    if (!fi) return '';
+    const frac = isAll() ? fi.max_read_fraction : fi.read_fraction;
+    if (frac == null) return isRead(fi.tier) ? 'opened (share unknown)' : '';
+    let s = `${Math.round(frac * 100)}% read`;
+    if (!isAll() && fi.read_lines && f.lines) s += ` (lines ${fi.read_lines.map(r => r[0] + '–' + r[1]).join(', ')} of ${f.lines})`;
+    if (!isAll() && fi.read_pages && f.pages) s += ` (pages ${fi.read_pages.join(', ')} of ${f.pages})`;
+    return s;
+  }
+
+  function renderDetail(leaf) {
+    const box = $('detail');
+    if (!leaf) { box.innerHTML = `<p class="empty">Hover or click a file in the tree.</p>`; return; }
+    const t = tierOf(leaf), fi = info(leaf.path), f = leaf.file;
+    const rows = [['Status', `<span class="chip ${t === 'unindexed' ? 'unindexed' : 't' + slotOf(t)}"><i></i>${labelOf(t)}</span>`]];
+    if (t === 'unindexed') rows.push(['Why', esc(f.reason || 'no text extracted')]);
+    if (f.lines) rows.push(['Size', `${f.lines} lines`]); else if (f.pages) rows.push(['Size', `${f.pages} pages`]); else if (f.size) rows.push(['Size', `${Math.round(f.size / 1024)} KB`]);
+    if (fi) {
+      if (isAll()) {
+        rows.push(['Questions', `listed ${fi.q_listed} · matched ${fi.q_hit} · opened ${fi.q_read} · named ${fi.q_cited}`]);
+        if (fi.q_named_unopened) rows.push(['Warning', `named without being opened in ${fi.q_named_unopened} question${fi.q_named_unopened > 1 ? 's' : ''}`]);
+        if (fi.reads) rows.push(['Opens', `${fi.reads} in total`]);
+        const ft = fracText(fi, f); if (ft) rows.push(['Read', ft]);
+      } else if (passive) {
+        rows.push(['Events', `listed ${fi.listed} · search hits ${fi.hits} · opened ${fi.reads}`]);
+        const ft = fracText(fi, f); if (ft) rows.push(['Read', ft]);
+        if (fi.named_unopened) rows.push(['Warning', 'the answer names this file, but nothing opened it']);
+        if (fi.tools && fi.tools.length) rows.push(['Via', esc(fi.tools.join(', '))]);
+        if (fi.agents && fi.agents.length) rows.push(['By', esc(fi.agents.join(', ')) + ' (subagent)']);
+      } else {
+        rows.push(['Retrieved', `${fi.chunks_retrieved} of ${fi.chunks_total} chunks (best rank #${fi.best_rank}, score ${fi.best_score})`]);
+        rows.push(['In context', fi.chunks_in_context ? `${fi.chunks_in_context} of ${fi.chunks_total} chunks` : 'none']);
+      }
+    }
+    rows.push(['Expected', expected.has(leaf.path) ? 'yes — click to unmark' : 'no — click to mark']);
+    box.innerHTML = `<div class="path">${esc(leaf.path)}</div><dl style="margin-top:8px">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  }
+
+  function renderTable() {
+    const rows = tree.leaves.map(l => {
+      const t = tierOf(l), fi = info(l.path), f = l.file;
+      const s = t === 'unindexed' ? 'unindexed' : 't' + slotOf(t);
+      const read = fi ? (isAll() ? (fi.max_read_fraction == null ? (isRead(t) ? 'yes' : '') : Math.round(fi.max_read_fraction * 100) + '%') : (fi.read_fraction == null ? (isRead(t) ? 'yes' : '') : Math.round(fi.read_fraction * 100) + '%')) : '';
+      const hits = fi ? (isAll() ? `${fi.q_hit}` : (fi.hits ?? fi.chunks_retrieved ?? '')) : '';
+      return `<tr><td class="num">${esc(l.idx)}</td><td class="file">${esc(l.path)}</td><td><span class="chip ${s}"><i></i>${labelOf(t)}</span></td><td class="num">${read}</td><td class="num">${hits}</td><td>${expected.has(l.path) ? 'yes' : ''}</td></tr>`;
+    });
+    $('table').innerHTML = `<thead><tr><th>#</th><th>File</th><th>Status</th><th>Read</th><th>${isAll() ? 'Questions matched' : 'Search hits'}</th><th>Expected</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+  }
+
+  function renderAll() { render(); renderLegend(); renderStats(); renderPanel(); renderTable(); renderDetail(pinned ? tree.leaves.find(l => l.path === pinned) : null); }
+
+  // ---------- expected marks ----------
+  function loadExpected() {
+    if (isAll()) expected = new Set([].concat(...data.questions.map(qq => qq.expected || [])));
+    else expected = new Set(q().expected || []);
+    try { const raw = localStorage.getItem(storeKey()); if (raw) expected = new Set(JSON.parse(raw)); } catch (e) { }
+  }
+  function saveExpected() { try { localStorage.setItem(storeKey(), JSON.stringify([...expected])); } catch (e) { } }
+  function toggle(path) {
+    const node = tree.map[path];
+    if (node && !node.leaf) { const ls = allLeaves(node); const all = ls.every(l => expected.has(l.path)); ls.forEach(l => all ? expected.delete(l.path) : expected.add(l.path)); }
+    else expected.has(path) ? expected.delete(path) : expected.add(path);
+    saveExpected(); pinned = path; renderAll();
+  }
+
+  // ---------- events ----------
+  const svg = $('tree'), tip = $('tip');
+  function leafFromEvent(e) { const g = e.target.closest('.leaf, .folder'); return g ? g.dataset.path : null; }
+  function highlight(path, on) {
+    let n = path ? (tree.map[path] || tree.leaves.find(l => l.path === path)) : null;
+    svg.querySelectorAll('.link.hi').forEach(el => el.classList.remove('hi'));
+    while (on && n && n.parent) { const el = svg.querySelector(`[data-link="${CSS.escape(n.path)}"]`); if (el) el.classList.add('hi'); n = n.parent; }
+  }
+  svg.addEventListener('mousemove', e => {
+    const path = leafFromEvent(e);
+    if (!path) { tip.hidden = true; highlight(null, false); return; }
+    const leaf = tree.leaves.find(l => l.path === path), folder = tree.map[path], box = svg.parentElement.getBoundingClientRect();
+    let html;
+    if (leaf) {
+      const t = tierOf(leaf), fi = info(path);
+      const extra = fi ? (isAll() ? ` · opened in ${fi.q_read} of ${data.cumulative.summary.questions}` : (passive ? (fi.reads ? ` · ${fracText(fi, leaf.file) || 'opened'}` : (fi.hits ? ` · ${fi.hits} search hit${fi.hits > 1 ? 's' : ''}` : '')) : ` · ${fi.chunks_in_context}/${fi.chunks_total} chunks in context`)) : (t === 'unindexed' ? ` · ${esc(leaf.file.reason || '')}` : '');
+      const warnTxt = fi && (isAll() ? fi.q_named_unopened > 0 : fi.named_unopened) ? ' · named in the answer, never opened' : '';
+      html = `<b>${esc(strip(leaf.name))}</b><div class="p">${esc(leaf.parent.path || '/')}</div><div class="s">${labelOf(t)}${extra}${warnTxt}${expected.has(path) ? ' · expected' : ''}</div>`;
+      renderDetail(leaf);
+    } else if (folder && !folder.leaf) {
+      const ls = allLeaves(folder), r = ls.filter(l => isRead(tierOf(l))).length, c = ls.filter(l => slotOf(tierOf(l)) >= 4).length;
+      html = `<b>${esc(folder.name)}</b><div class="s">${r} of ${ls.length} files opened · ${c} named · click to mark all as expected</div>`;
+    }
+    tip.innerHTML = html; tip.hidden = false;
+    const x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
+    tip.style.left = Math.min(x, box.width - tip.offsetWidth - 8) + 'px';
+    tip.style.top = Math.min(y, box.height - tip.offsetHeight - 8) + 'px';
+    highlight(path, true);
+  });
+  svg.addEventListener('mouseleave', () => { tip.hidden = true; highlight(null, false); if (pinned) renderDetail(tree.leaves.find(l => l.path === pinned) || null); });
+  svg.addEventListener('click', e => { const p = leafFromEvent(e); if (p) toggle(p); });
+  svg.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { const p = leafFromEvent(e); if (p) { e.preventDefault(); toggle(p); } } });
+
+  $('questions').addEventListener('click', e => {
+    const b = e.target.closest('.qbtn'); if (!b) return;
+    view = b.dataset.v === 'all' ? 'all' : +b.dataset.v; pinned = null; loadExpected(); renderQuestions(); renderAll();
+  });
+  document.addEventListener('click', e => { const a = e.target.closest('.gaps a[data-path]'); if (!a) return; pinned = a.dataset.path; renderDetail(tree.leaves.find(l => l.path === pinned)); highlight(pinned, true); });
+  $('clearbtn').addEventListener('click', () => { expected = new Set(); try { localStorage.removeItem(storeKey()); } catch (e) { } renderAll(); });
+  $('exportbtn').addEventListener('click', () => { $('pastein').value = JSON.stringify({ [isAll() ? 'all' : q().id]: [...expected] }, null, 1); });
+  $('loadbtn').addEventListener('click', () => { try { setData(JSON.parse($('pastein').value)); } catch (err) { $('loaderr').textContent = 'That is not valid coverage JSON: ' + err.message; } });
+  $('filein').addEventListener('change', e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { setData(JSON.parse(rd.result)); $('loaderr').textContent = ''; } catch (err) { $('loaderr').textContent = 'That file is not valid coverage JSON: ' + err.message; } };
+    rd.readAsText(f);
+  });
+
+  function setData(d, isDemo) {
+    if (!d || !Array.isArray(d.files) || !Array.isArray(d.questions)) throw new Error('expected {files: [...], questions: [...]} from build_coverage.py');
+    data = d; view = d.questions.length ? 0 : 'all'; pinned = null;
+    if (!d.questions.length && !d.cumulative) throw new Error('no questions recorded yet');
+    setTiers(); buildTree(); loadExpected(); renderQuestions(); renderAll();
+    $('loaderr').textContent = '';
+    $('hinttext').textContent = passive
+      ? 'Each branch is a top-level folder; each leaf is a file. Color is how far the session got with the file: listed, matched, opened, named. Click a file or folder to mark it as one you expected the answer to draw on.'
+      : 'Each branch is a top-level folder; each leaf is a file. Hover for detail. Click a file or folder to mark it as one you expected the answer to draw on.';
+    $('datanote').textContent = isDemo
+      ? 'Showing the built-in example: a fictional data room (Meridian Coatings, "Project Lantern") with a recorded session of three questions. Load your own coverage.json to replace it.'
+      : `Loaded ${d.files.length} files and ${d.questions.length} question(s). Expected marks are kept in this browser only.`;
+  }
+
+  let demo = null;
+  try { demo = JSON.parse($('demo-data').textContent); } catch (e) { demo = null; }
+  if (demo) { try { setData(demo, true); } catch (e) { $('datanote').textContent = 'Could not load the embedded data: ' + e.message; $('loadbox').open = true; } }
+  else { $('datanote').textContent = 'No data embedded. Load a coverage.json to begin.'; $('loadbox').open = true; }
+})();
+</script>
