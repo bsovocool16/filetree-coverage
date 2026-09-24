@@ -10,6 +10,8 @@ Without --standalone the output is the bare page body the Claude Artifact tool
 expects (it wraps the skeleton itself). Browsers open the bare form too; the
 --standalone form only adds the viewport meta and a document skeleton.
 """
+from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path
@@ -30,7 +32,7 @@ def main():
 
     data = json.loads(Path(a.coverage).read_text())
     if not isinstance(data.get("files"), list) or not data.get("questions"):
-        raise SystemExit("coverage.json needs 'files' and at least one question — run coverage_pipeline.py first")
+        raise SystemExit("coverage.json needs 'files' and at least one question — run build_coverage.py first")
     for q in data["questions"]:
         for e in q.get("excerpts", []):
             e.pop("text", None)
@@ -51,13 +53,13 @@ def main():
     if a.summary:
         passive = data.get("mode") == "passive"
         read_tiers = {"read", "cited"} if passive else {"in_context", "cited"}
-        rank = {"untouched": 0, "listed": 1, "hit": 2, "read": 3, "cited": 4, "retrieved": 1, "in_context": 3}
         unindexed = [f["path"] for f in data["files"] if not f.get("indexed", True)]
         for q in data["questions"]:
             s = q["summary"]
             print(f"\n{q['id']}: {q['question'][:160]}")
             if passive:
-                print(f"  files {s['files_total']} · listed or searched {s['files_listed']} · matched {s['files_hit']} · "
+                print(f"  files {s['files_total']} · in a searched folder {s['files_in_searched_folders']}"
+                      f" ({s['files_in_searched_folders_text']} text-searchable) · matched {s['files_hit']} · "
                       f"opened {s['files_read']} · named in answer {s['files_cited']}"
                       + (f" · named but never opened {s['files_named_unopened']}" if s.get("files_named_unopened") else ""))
                 partial = [(p, d) for p, d in q["files"].items() if d.get("read_fraction") not in (None, 1, 1.0) and d["tier"] in read_tiers]
@@ -78,8 +80,8 @@ def main():
                     print(f"    - {p}  [{tier(p)}]")
         if data.get("cumulative"):
             c = data["cumulative"]["summary"]
-            print(f"\nall {c['questions']} questions: {c['files_total']} files · ever opened {c['ever_read']} · ever named {c['ever_cited']} · never touched {c['never_touched']}")
-            never = [p for p, d in data["cumulative"]["files"].items() if rank.get(d["tier"], 0) < 3]
+            print(f"\nall {c['questions']} questions: {c['files_total']} files · ever opened {c['ever_read']} · ever named {c['ever_cited']} · never matched or opened {c['never_touched']}")
+            never = [p for p, d in data["cumulative"]["files"].items() if d["tier"] not in read_tiers]
             print(f"  never opened by any question: {len(never)}")
         if unindexed:
             print(f"\nnot indexable ({len(unindexed)}):")
