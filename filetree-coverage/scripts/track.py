@@ -12,13 +12,16 @@ room (see room.py), and appends one line per event to that room's ledger:
     {"t": ..., "type": "listed", "files": [...]}                         files appeared in a listing (Glob, ls, find)
     {"t": ..., "type": "scanned", "scope": "<dir>"}                      a search ran over this folder (its files were searched)
     {"t": ..., "type": "hit", "files": [...], "pattern": ...}            files matched a search (Grep, grep, rg)
-    {"t": ..., "type": "read", "file": ..., "offset", "limit", "pages"}  a file was opened (Read, cat, head, sed -n, pdftotext ...)
+    {"t": ..., "type": "read", "file": ..., "offset", "limit", "pages",  a file was opened (Read, cat, head, sed -n, pdftotext ...);
+        "start", "lines_returned", "total_lines"}                        for Read, the lines the tool says it returned
     {"t": ..., "type": "answer", "text": ...}                            the turn ended; the assistant's final message
 
 Every event also carries "session", "tool" and, inside a subagent, "agent".
 The recorder is deliberately dumb: it does not judge relevance, it does not
 know what the question meant, and it does not touch the documents.
 """
+from __future__ import annotations
+
 import json
 import os
 import re
@@ -41,9 +44,10 @@ def load_rooms():
         d = json.loads(REGISTRY.read_text())
         rooms = []
         for r in d.get("rooms", []):
-            root = Path(r["root"])
             store = Path(r["store"])
-            rooms.append((root, store, r["id"]))
+            # one entry per spelling of the folder's path; a tool call's paths use one of them
+            for root in [r["root"], *r.get("aliases", [])]:
+                rooms.append((Path(root), store, r["id"]))
         return rooms
     except Exception:
         return []
@@ -201,15 +205,30 @@ def lines_as_files(out: str, root: Path, dirs: list[str], cwd: str) -> list[str]
                 break
     return sorted(found)
 
+def tool_response(payload: dict):
+    return payload.get("tool_response") or payload.get("tool_result") or ""
+
+
 def result_text(payload: dict) -> str:
-    r = payload.get("tool_result") or payload.get("tool_response") or ""
+    """The tool's output as plain text. Claude Code returns structured results:
+    Read as {"file": {"content", ...}}, Grep as {"filenames": [...], "content"},
+    Bash as {"stdout", "stderr"}; older payloads and other tools return strings."""
+    r = tool_response(payload)
     if isinstance(r, dict):
+        parts = []
+        f = r.get("file")
+        if isinstance(f, dict) and isinstance(f.get("content"), str):
+            parts.append(f["content"])
+        if isinstance(r.get("filenames"), list):
+            parts.append("\n".join(str(x) for x in r["filenames"]))
         for k in ("text", "content", "stdout", "output"):
             v = r.get(k)
             if isinstance(v, str):
-                return v
-            if isinstance(v, list):
-                return "\n".join(x.get("text", "") if isinstance(x, dict) else str(x) for x in v)
+                parts.append(v)
+            elif isinstance(v, list):
+                parts.append("\n".join(x.get("text", "") if isinstance(x, dict) else str(x) for x in v))
+        if parts:
+            return "\n".join(parts)
         return json.dumps(r)[:200000]
     if isinstance(r, list):
         return "\n".join(x.get("text", "") if isinstance(x, dict) else str(x) for x in r)
@@ -239,8 +258,17 @@ def handle_tool(payload: dict, rooms):
                 for k in ("offset", "limit", "pages"):
                     if inp.get(k) not in (None, ""):
                         e[k] = inp[k]
-                e["lines_returned"] = count_lines(out)
-                tr = payload.get("tool_result")
+                tr = tool_response(payload)
+                meta = tr.get("file") if isinstance(tr, dict) else None
+                if isinstance(meta, dict) and isinstance(meta.get("numLines"), int):
+                    # the tool says which lines it returned; it truncates long files, so a Read with
+                    # no offset or limit is not necessarily a full read
+                    e["start"] = meta.get("startLine") or 1
+                    e["lines_returned"] = meta["numLines"]
+                    if isinstance(meta.get("totalLines"), int):
+                        e["total_lines"] = meta["totalLines"]
+                else:
+                    e["lines_returned"] = count_lines(out)
                 if isinstance(tr, dict) and tr.get("type") == "error":
                     e["error"] = True
                 ev.append(e)
@@ -307,6 +335,7 @@ def main():
     rooms = load_rooms()
     if not rooms:
         return
+    stores = list(dict.fromkeys(store for _, store, _ in rooms))  # a room with an alias appears twice in rooms
     try:
         ev = payload.get("hook_event_name", "")
         base = {"t": now(), "session": payload.get("session_id")}
@@ -314,13 +343,13 @@ def main():
             base["agent"] = payload.get("agent_type") or payload.get("agent_id")
         if ev == "UserPromptSubmit":
             text = payload.get("user_input") or payload.get("prompt") or ""
-            for root, store, rid in rooms:
+            for store in stores:
                 append(store, {**base, "type": "prompt", "text": text[:MAX_TEXT]})
         elif ev in ("Stop", "SubagentStop"):
             text = payload.get("last_assistant_message") or ""
             if not text and payload.get("transcript_path"):
                 text = last_assistant_from_transcript(payload["transcript_path"])
-            for root, store, rid in rooms:
+            for store in stores:
                 append(store, {**base, "type": "answer" if ev == "Stop" else "subanswer", "text": text[:MAX_TEXT]})
         elif ev == "PostToolUse":
             handle_tool(payload, rooms)

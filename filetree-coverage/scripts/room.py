@@ -13,6 +13,8 @@ text files or page count for PDFs when a PDF library is installed, so the
 viewer can say how much of a file was read. Nothing else is extracted; the
 documents are not copied.
 """
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -86,7 +88,8 @@ def index_folder(root: Path):
 
 
 def cmd_map(a):
-    root = Path(a.folder).expanduser().resolve()
+    given = Path(os.path.abspath(Path(a.folder).expanduser()))
+    root = given.resolve()
     if not root.is_dir():
         sys.exit(f"not a directory: {root}")
     reg = load_registry()
@@ -101,6 +104,11 @@ def cmd_map(a):
     (store / "room.json").write_text(json.dumps(room, indent=1))
     (store / "ledger.jsonl").touch()
     rec = {"id": rid, "root": str(root), "store": str(store), "mapped_at": room["mapped_at"]}
+    # the folder may be named through a symlink (macOS /var, a synced-drive link): tool calls
+    # may use any spelling it has been mapped by, so the recorder matches all of them
+    aliases = set((existing or {}).get("aliases", [])) | ({str(given)} if given != root else set())
+    if aliases:
+        rec["aliases"] = sorted(aliases)
     reg["rooms"] = [r for r in reg["rooms"] if r["id"] != rid] + [rec]
     save_registry(reg)
     n_pdf = sum(1 for f in files if f["ext"] == ".pdf")
