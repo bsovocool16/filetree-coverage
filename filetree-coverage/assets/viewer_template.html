@@ -10,8 +10,8 @@
     --ink-2: #52514e;
     --muted: #898781;
     --hair: #e1e0d9;
-    --axis: #c3c2b7;
-    --link-off: #d9d8d0;
+    --axis: #a9a89c;
+    --link-off: #c4c3b9;
     --t1: #6ac380;
     --t2: #3ca95d;
     --t3: #1f8944;
@@ -26,18 +26,18 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-      --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
+      --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #d6d5cc; --muted: #a8a69e;
+      --hair: #2c2c2a; --axis: #6f6e67; --link-off: #5f5e58;
       --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
-      --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #5a9cf0;
+      --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #6fb0ff;
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
-    --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
+    --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #d6d5cc; --muted: #a8a69e;
+    --hair: #2c2c2a; --axis: #6f6e67; --link-off: #5f5e58;
     --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
-    --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #5a9cf0;
+    --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #6fb0ff;
   }
 
   * { box-sizing: border-box; }
@@ -84,8 +84,8 @@
   svg .leaf-label { font-size: 10px; fill: var(--ink-2); pointer-events: auto; }
   svg .leaf-label.exp { fill: var(--ink); font-weight: 500; }
   svg .leaf-label.dim { fill: var(--muted); }
-  svg .folder-num { font-family: var(--mono); font-size: 9px; fill: var(--ink-2); text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 500; }
-  svg .arc-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--muted); font-weight: 500; }
+  svg .folder-num { font-family: var(--mono); font-size: 9px; fill: var(--ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; font-weight: 500; }
+  svg .arc-label { font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; fill: var(--ink-2); font-weight: 600; }
   svg .link { fill: none; stroke: var(--link-off); stroke-width: 1; }
   svg .link.on { stroke-width: 1.5; }
   svg .link.hi { stroke: var(--ink) !important; stroke-width: 2.2 !important; }
@@ -117,16 +117,16 @@
   svg .root text { fill: var(--surface); font-size: 9px; font-family: var(--mono); text-anchor: middle; dominant-baseline: central; font-weight: 500; }
   svg .link.l1 { stroke: var(--t1); } svg .link.l2 { stroke: var(--t2); } svg .link.l3 { stroke: var(--t3); } svg .link.l4 { stroke: var(--t4); stroke-width: 2; }
   svg .link.t-folder { stroke: var(--t3); opacity: 0.45; }
-  svg .scope { fill: var(--scope); opacity: 0.13; pointer-events: none; }
-  svg .scope.hi { opacity: 0.3; }
-  svg .listed-arc { fill: none; stroke: var(--muted); stroke-width: 2.5; opacity: 0.55; pointer-events: none; }
+  svg .scope { fill: var(--scope); fill-opacity: 0.08; stroke: var(--scope); stroke-opacity: 0.55; stroke-width: 1; pointer-events: none; }
+  svg .scope.hi { fill-opacity: 0.2; stroke-opacity: 0.9; }
+  svg .listed-arc { fill: none; stroke: var(--muted); stroke-width: 2.5; opacity: 0.85; pointer-events: none; }
   svg .stem { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
   svg .stub .badge { fill: var(--surface-2); stroke: var(--muted); stroke-width: 1; }
   svg .stub .badge.gap { stroke: var(--crit); stroke-width: 2; }
-  svg .stub-label { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+  svg .stub-label { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
   svg .stub:hover .badge { stroke: var(--ink); }
   svg .folder.searched circle.body { fill: var(--scope); fill-opacity: 0.35; stroke: var(--scope); }
-  .legend i.sector { border-radius: 2px; background: var(--scope); opacity: 0.45; }
+  .legend i.sector { border-radius: 2px; background: color-mix(in srgb, var(--scope) 25%, transparent); border: 1px solid var(--scope); }
   .legend i.sector2 { border-radius: 2px; background: linear-gradient(90deg, color-mix(in srgb, var(--scope) 22%, transparent) 50%, color-mix(in srgb, var(--scope) 45%, transparent) 50%); }
   .legend i.box { border-radius: 2.5px; background: var(--surface-2); border: 1px solid var(--muted); }
   .legend i.arc { border-radius: 0; height: 3px; width: 14px; background: var(--muted); opacity: 0.7; }
