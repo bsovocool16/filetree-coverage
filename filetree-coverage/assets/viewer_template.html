@@ -1,5 +1,4 @@
 <title>Data Room Coverage</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   :root {
     color-scheme: light;
@@ -19,6 +18,7 @@
     --crit: #d03b3b;
     --warn: #fab219;
     --focus: #2a78d6;
+    --scope: #2a78d6;
     --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
     --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   }
@@ -28,7 +28,7 @@
       --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
       --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
       --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
-      --crit: #e06060; --warn: #fab219; --focus: #3987e5;
+      --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #5a9cf0;
     }
   }
   :root[data-theme="dark"] {
@@ -36,7 +36,7 @@
     --bg: #0f100f; --surface: #1a1a19; --surface-2: #232322; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #898781;
     --hair: #2c2c2a; --axis: #383835; --link-off: #333331;
     --t1: #137738; --t2: #25984d; --t3: #4cb86a; --t4: #83dc97;
-    --crit: #e06060; --warn: #fab219; --focus: #3987e5;
+    --crit: #e06060; --warn: #fab219; --focus: #3987e5; --scope: #5a9cf0;
   }
 
   * { box-sizing: border-box; }
@@ -58,8 +58,8 @@
 
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); gap: 8px; margin-bottom: 14px; }
   .stat { background: var(--surface); border: 1px solid var(--hair); border-radius: 6px; padding: 10px 12px; }
-  .stat .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; }
-  .stat .v { font-size: 24px; font-weight: 500; line-height: 1.15; margin-top: 2px; }
+  .stat .k { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+  .stat .v { font-size: 24px; font-weight: 500; line-height: 1.15; white-space: nowrap; }
   .stat .v small { font-size: 13px; color: var(--muted); font-weight: 400; }
   .stat .sw { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
   .stat.gap .v { color: var(--crit); }
@@ -92,6 +92,9 @@
   svg .folder circle.cov { fill: none; stroke: var(--t3); stroke-width: 2.5; }
   svg .folder.exp circle.body { stroke: var(--ink); stroke-width: 1.5; }
   svg .folder, svg .leaf { cursor: pointer; }
+  .treebox.marking svg .folder, .treebox.marking svg .leaf { cursor: copy; }
+  .treebox .hint .hintr { display: inline-flex; align-items: center; gap: 10px; }
+  button.sm[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
   svg .leaf .hit { fill: transparent; }
   svg .leaf .ring { fill: none; stroke: var(--ink); stroke-width: 1.5; }
   svg .leaf .ring.gap { stroke: var(--crit); stroke-width: 2.2; }
@@ -113,6 +116,19 @@
   svg .root text { fill: var(--surface); font-size: 9px; font-family: var(--mono); text-anchor: middle; dominant-baseline: central; font-weight: 500; }
   svg .link.l1 { stroke: var(--t1); } svg .link.l2 { stroke: var(--t2); } svg .link.l3 { stroke: var(--t3); } svg .link.l4 { stroke: var(--t4); stroke-width: 2; }
   svg .link.t-folder { stroke: var(--t3); opacity: 0.45; }
+  svg .scope { fill: var(--scope); opacity: 0.13; pointer-events: none; }
+  svg .scope.hi { opacity: 0.3; }
+  svg .listed-arc { fill: none; stroke: var(--muted); stroke-width: 2.5; opacity: 0.55; pointer-events: none; }
+  svg .stem { stroke: var(--axis); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+  svg .stub .badge { fill: var(--surface-2); stroke: var(--muted); stroke-width: 1; }
+  svg .stub .badge.gap { stroke: var(--crit); stroke-width: 2; }
+  svg .stub-label { font-family: var(--mono); font-size: 10px; fill: var(--muted); }
+  svg .stub:hover .badge { stroke: var(--ink); }
+  svg .folder.searched circle.body { fill: var(--scope); fill-opacity: 0.35; stroke: var(--scope); }
+  .legend i.sector { border-radius: 2px; background: var(--scope); opacity: 0.45; }
+  .legend i.sector2 { border-radius: 2px; background: linear-gradient(90deg, color-mix(in srgb, var(--scope) 22%, transparent) 50%, color-mix(in srgb, var(--scope) 45%, transparent) 50%); }
+  .legend i.box { border-radius: 2.5px; background: var(--surface-2); border: 1px solid var(--muted); }
+  .legend i.arc { border-radius: 0; height: 3px; width: 14px; background: var(--muted); opacity: 0.7; }
 
   .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--surface); padding: 8px 10px; border-radius: 6px; font-size: 12px; line-height: 1.4; max-width: 300px; z-index: 5; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
   .tip b { font-weight: 600; display: block; margin-bottom: 2px; }
@@ -182,8 +198,8 @@
   <div class="main">
     <section class="treebox" aria-label="Coverage tree">
       <div class="hint">
-        <span id="hinttext">Each branch is a top-level folder; each leaf is a file. Hover for detail. Click a file or folder to mark it as one you expected the answer to draw on.</span>
-        <span id="modeline"></span>
+        <span id="hinttext">Click a folder to open or close it</span>
+        <span class="hintr"><span id="modeline"></span><button type="button" class="sm" id="markbtn" aria-pressed="false" title="While on, clicking a file or folder marks it as one the answer should rest on">Mark expected</button></span>
       </div>
       <svg id="tree" viewBox="-600 -600 1200 1200" role="img" aria-label="Radial file tree colored by how far each file was touched"></svg>
       <div class="legend" id="legend"></div>
@@ -197,14 +213,12 @@
         <pre class="answer" id="answer"></pre>
       </div>
       <div class="card">
-        <h2 id="gaphead">Expected but not opened <span class="cnt" id="gapcount"></span></h2>
+        <h2 id="gaphead">Expected, not opened <span class="cnt" id="gapcount"></span></h2>
         <ul class="gaps" id="gaps"></ul>
-        <p class="note" id="gapnote">Files you marked as germane that were never opened for this question. A file that matched a search but was not opened is the first place to look.</p>
       </div>
       <div class="card" id="zerocard" hidden>
-        <h2>Never opened, any question <span class="cnt" id="zerocount"></span></h2>
+        <h2 title="Files no question has opened. Marked files come first.">Never opened <span class="cnt" id="zerocount"></span></h2>
         <ul class="gaps" id="zeros"></ul>
-        <p class="note">Files nothing has opened across every question recorded. Marked files come first.</p>
       </div>
       <div class="card detail">
         <h2>File</h2>
@@ -245,8 +259,7 @@
   // Tier systems. Passive (hooks) runs declare their own; the older pipeline
   // format is mapped onto the same four visual slots.
   const PASSIVE = [
-    { id: 'untouched', label: 'Not touched', slot: 0 },
-    { id: 'listed', label: 'Listed or searched, no hit', slot: 1 },
+    { id: 'untouched', label: 'Not matched or opened', slot: 0 },
     { id: 'hit', label: 'Matched a search', slot: 2 },
     { id: 'read', label: 'Opened', slot: 3 },
     { id: 'cited', label: 'Named in the answer', slot: 4 },
@@ -300,7 +313,22 @@
     if (isAll()) return fi.max_read_fraction == null ? null : fi.max_read_fraction;
     return fi.read_fraction == null ? null : fi.read_fraction;
   }
-  const storeKey = () => `vdrcov:expected:${data.vdr_root}:${isAll() ? 'all' : q().id}`;
+  // per-folder info for the current view: how many searches ran over it, how many listings showed it
+  function folderInfo(path) {
+    if (isAll()) {
+      const c = data.cumulative && data.cumulative.folders && data.cumulative.folders[path];
+      return c ? { searched: c.q_searched, listed: c.q_listed, patterns: [] } : null;
+    }
+    return (q().folders && q().folders[path]) || null;
+  }
+  // the folders whose searches reach this node: itself and its ancestors, nearest first
+  function searchedBy(node) {
+    const out = [];
+    for (let n = node.leaf ? node.parent : node; n; n = n.parent) { const fi = folderInfo(n.path); if (fi && fi.searched) out.push(n); }
+    return out;
+  }
+  const BINARY = /\.(pdf|docx?|xlsx?|pptx|zip|png|jpe?g|tiff?|msg|eml)$/i;
+  const storeKey = () =>`vdrcov:expected:${data.vdr_root}:${isAll() ? 'all' : q().id}`;
 
   // ---------- tree ----------
   function buildTree() {
@@ -324,21 +352,106 @@
         if (!c.leaf) number(c, c.idx);
       });
     })(root, '');
-    const leaves = [], top = root.children;
-    const nLeaves = countLeaves(root);
-    const da = 2 * Math.PI / (nLeaves + GAP_SLOTS * top.length);
-    let a = 0, maxFolderDepth = 1;
-    (function place(n) {
-      if (n.leaf) { n.a = a + da / 2; a += da; n.r = R_LEAF; leaves.push(n); return; }
-      if (n.depth > 0) maxFolderDepth = Math.max(maxFolderDepth, n.depth);
-      const a0 = a; n.children.forEach(place);
-      n.a0 = a0 + da / 2; n.a1 = a - da / 2; n.a = (n.a0 + n.a1) / 2;
-      if (n.depth === 1) a += GAP_SLOTS * da;
-    })(root);
+    const leaves = [];
+    (function collect(n) { if (n.leaf) leaves.push(n); else n.children.forEach(collect); })(root);
+    let maxFolderDepth = 1;
+    for (const p in map) if (p) maxFolderDepth = Math.max(maxFolderDepth, map[p].depth);
     const stepF = maxFolderDepth > 1 ? (R_FMAX - R_F1) / (maxFolderDepth - 1) : 0;
     (function radius(n) { if (!n.leaf) { n.r = n.depth === 0 ? 0 : R_F1 + (n.depth - 1) * stepF; n.children.forEach(radius); } })(root);
     root.a = 0;
-    tree = { root, leaves, da, map };
+    tree = { root, leaves, map, da: 0, visLeaves: [], stubs: [] };
+  }
+
+  // ---------- layout ----------
+  // A large room is drawn around what the session did. Folders with a matched, opened or named file
+  // open to one leaf per file; folders a search or listing covered open while they fit the budget;
+  // every other folder collapses to one node with its file count. Nothing is dropped: a folder the
+  // session never entered stays on the map, as a count. Clicking a collapsed node opens it.
+  const COLLAPSE_OVER = 400, DIRECT_CAP = 120, STUB_SLOTS = 2;
+  // a collapsed node's share of the circle grows with the log of what it holds, so a 6,000-file folder
+  // reads as bigger than a 12-file one without taking the room from the files that were worked on
+  const stubWeight = (count, depth) => (depth === 1 ? 4 : STUB_SLOTS) + (depth === 1 ? 3 : 1) * Math.log10(Math.max(count, 1));
+  let userOpen = new Set(), userClosed = new Set(), markMode = false;
+  function isActive(l) {
+    if (slotOf(tierOf(l)) >= 2) return true;
+    const fi = info(l.path);
+    return !!(fi && (isAll() ? fi.q_named_unopened > 0 : fi.named_unopened));
+  }
+  function layout() {
+    const root = tree.root, big = tree.leaves.length > COLLAPSE_OVER;
+    const folders = Object.values(tree.map).filter(n => n.depth > 0);
+    (function act(n) { n.act = n.leaf ? (isActive(n) ? 1 : 0) : n.children.reduce((s, c) => s + act(c), 0); return n.act; })(root);
+    const open = new Set(['']), full = new Set();
+    const openUp = n => { for (; n; n = n.parent) open.add(n.path); };
+    const openDown = n => { if (n.leaf) return; open.add(n.path); full.add(n.path); n.children.forEach(openDown); };
+    if (!big) folders.forEach(openDown);
+    else {
+      folders.filter(n => n.act > 0).forEach(openUp);
+      for (const p of userOpen) { const n = tree.map[p.replace(/#all$/, '')]; if (n) { openUp(n); if (p.endsWith('#all')) full.add(n.path); } }
+      const scoped = folders.filter(n => { const fi = folderInfo(n.path); return fi && (fi.searched || fi.listed) && !userClosed.has(n.path); })
+        .sort((a, b) => countLeaves(a) - countLeaves(b));
+      for (const n of scoped) {
+        if (slotsFor(open, full) + countLeaves(n) > COLLAPSE_OVER) continue;
+        openUp(n); openDown(n);
+      }
+    }
+    for (const p of userClosed) open.delete(p);
+    // assign angles: a leaf takes one slot, a collapsed folder or a "more files" node takes STUB_SLOTS
+    const top = root.children, items = [];
+    (function walk(n) {
+      const leaves = n.children.filter(c => c.leaf);
+      const hide = big && !full.has(n.path) && leaves.length > DIRECT_CAP;
+      let hidden = 0;
+      for (const c of n.children) {
+        if (c.leaf) { if (hide && !c.act) hidden++; else items.push({ node: c, w: 1 }); }
+        else if (open.has(c.path)) { items.push({ start: c }); walk(c); items.push({ end: c }); if (c.depth === 1) items.push({ gap: true }); }
+        else { items.push({ node: c, w: stubWeight(countLeaves(c), c.depth), collapsed: true }); if (c.depth === 1) items.push({ gap: true }); }
+      }
+      if (hidden) items.push({ node: { more: true, path: n.path + '/…', parent: n, count: hidden, depth: n.depth + 1 }, w: stubWeight(hidden, n.depth + 1) });
+    })(root);
+    const total = items.reduce((s, it) => s + (it.w || 0) + (it.gap ? GAP_SLOTS : 0), 0);
+    const da = 2 * Math.PI / Math.max(total, 1);
+    const visLeaves = [], stubs = [], starts = new Map();
+    let a = 0;
+    for (const it of items) {
+      if (it.gap) { a += GAP_SLOTS * da; continue; }
+      if (it.start) { starts.set(it.start, a); it.start.open = true; continue; }
+      if (it.end) { const n = it.end; n.a0 = starts.get(n) + da / 2; n.a1 = a - da / 2; n.a = (n.a0 + n.a1) / 2; continue; }
+      const n = it.node;
+      if (n.leaf) { n.a = a + da / 2; n.r = R_LEAF; visLeaves.push(n); }
+      else {
+        n.a0 = a + da / 2; n.a1 = a + (it.w - 0.5) * da; n.a = a + it.w * da / 2;
+        if (it.collapsed) n.open = false; else n.r = R_LEAF;
+        stubs.push(n);
+      }
+      a += it.w * da;
+    }
+    root.open = true;
+    Object.assign(tree, { da, visLeaves, visSet: new Set(visLeaves), stubs, collapsed: big });
+  }
+  // a folder click opens or closes it; the "+N" node under a folder shows or hides the rest of its files
+  function toggleOpen(key) {
+    if (key.endsWith('#all')) { userOpen.has(key) ? userOpen.delete(key) : userOpen.add(key); return; }
+    const n = tree.map[key];
+    if (!n || n.depth === 0) return;
+    if (n.open) { userClosed.add(key); for (const p of [...userOpen]) if (p === key || p === key + '#all' || p.startsWith(key + '/')) userOpen.delete(p); }
+    else { userClosed.delete(key); userOpen.add(key); }
+  }
+  // make a hidden file visible: open its folders and show all of its folder's files
+  function reveal(leaf) {
+    for (let n = leaf.parent; n; n = n.parent) userClosed.delete(n.path);
+    userOpen.add(leaf.parent.path); userOpen.add(leaf.parent.path + '#all');
+  }
+
+  // slots a layout would use with these folders open (for the budget)
+  function slotsFor(open, full) {
+    let n = 0;
+    (function walk(f) {
+      const leaves = f.children.filter(c => c.leaf), hide = !full.has(f.path) && leaves.length > DIRECT_CAP;
+      if (hide) { const act = leaves.filter(l => l.act).length; n += act + (act < leaves.length ? STUB_SLOTS : 0); } else n += leaves.length;
+      for (const c of f.children) if (!c.leaf) { if (open.has(c.path)) walk(c); else n += STUB_SLOTS; }
+    })(tree.root);
+    return n;
   }
   function countLeaves(n) { return n.leaf ? 1 : n.children.reduce((s, c) => s + countLeaves(c), 0); }
   function allLeaves(n, out = []) { if (n.leaf) out.push(n); else n.children.forEach(c => allLeaves(c, out)); return out; }
@@ -354,8 +467,27 @@
     return `M0,0L0,${-r}A${r},${r} 0 ${a > Math.PI ? 1 : 0} 1 ${x.toFixed(2)},${y.toFixed(2)}Z`;
   }
 
+  // annular sector between radii r0 < r1 over angles a0 < a1 (a full ring when it spans the circle)
+  function sectorPath(r0, r1, a0, a1) {
+    const f = v => v.toFixed(2);
+    if (a1 - a0 >= 2 * Math.PI - 1e-6) {
+      return `M0,${-r1}A${r1},${r1} 0 1 1 0,${r1}A${r1},${r1} 0 1 1 0,${-r1}Z` +
+        (r0 > 0 ? `M0,${-r0}A${r0},${r0} 0 1 0 0,${r0}A${r0},${r0} 0 1 0 0,${-r0}Z` : '');
+    }
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    const [x0, y0] = P(a0, r1), [x1, y1] = P(a1, r1), [x2, y2] = P(a1, r0), [x3, y3] = P(a0, r0);
+    return `M${f(x0)},${f(y0)}A${r1},${r1} 0 ${large} 1 ${f(x1)},${f(y1)}L${f(x2)},${f(y2)}A${r0},${r0} 0 ${large} 0 ${f(x3)},${f(y3)}Z`;
+  }
+  function arcPath(r, a0, a1) {
+    const [x0, y0] = P(a0, r), [x1, y1] = P(a1, r);
+    return `M${x0.toFixed(2)},${y0.toFixed(2)}A${r},${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1.toFixed(2)},${y1.toFixed(2)}`;
+  }
+  // a folder's angular extent, from the edge of its first leaf's slot to the edge of its last
+  const spanOf = n => n.depth === 0 ? [0, 2 * Math.PI] : [n.a0 - tree.da / 2, n.a1 + tree.da / 2];
+
   // ---------- render ----------
   function render() {
+    layout();
     const svg = $('tree');
     const leafSlot = R_LEAF * tree.da;
     const showLabels = leafSlot >= 11;
@@ -364,15 +496,46 @@
     const out = [];
     const covOf = n => { const ls = allLeaves(n); return { read: ls.filter(l => isRead(tierOf(l))).length, total: ls.length }; };
 
+    // search scopes underneath everything: a sector from the searched folder out past its leaves.
+    // A search over a folder covers its subfolders, so nested searches stack and the shade deepens.
+    (function scopes(n) {
+      const fi = folderInfo(n.path);
+      if (fi && fi.searched) {
+        const [a0, a1] = spanOf(n), r0 = n.depth === 0 ? 22 : n.r - (n.depth === 1 ? 18 : 14);
+        out.push(`<path class="scope" data-scope="${esc(n.path)}" d="${sectorPath(r0, R_LEAF + 9, a0, a1)}"/>`);
+      }
+      if (n.open) n.children.forEach(c => { if (!c.leaf) scopes(c); });
+    })(tree.root);
+    // listings: an arc just inside the leaves of each folder whose contents a listing showed
+    (function listings(n) {
+      const fi = folderInfo(n.path);
+      const ls = n.open ? n.children.filter(c => c.leaf && tree.visSet.has(c)) : [];
+      if (fi && fi.listed && ls.length) {
+        out.push(`<path class="listed-arc" d="${arcPath(R_LEAF - 13, ls[0].a - tree.da * 0.4, ls[ls.length - 1].a + tree.da * 0.4)}"/>`);
+      }
+      if (n.open) n.children.forEach(c => { if (!c.leaf) listings(c); });
+    })(tree.root);
+
     (function links(n) {
       for (const c of n.children) {
         let cls = 'link';
-        if (c.leaf) { const s = slotOf(tierOf(c)); if (s >= 1) cls += ' on l' + s; }
+        if (c.leaf) { if (!tree.visSet.has(c)) continue; const s = slotOf(tierOf(c)); if (s >= 1) cls += ' on l' + s; }
         else if (covOf(c).read > 0) cls += ' on t-folder';
         out.push(`<path class="${cls}" data-link="${esc(c.path)}" d="${linkPath(c)}"/>`);
-        if (!c.leaf) links(c);
+        if (!c.leaf && c.open) links(c);
       }
     })(tree.root);
+    // collapsed folders and "more files" nodes: a dashed stem out to the leaf ring, and the count there
+    for (const n of tree.stubs) {
+      const from = n.more ? n.parent : n, [x0, y0] = P(n.more ? from.a : n.a, n.more ? from.r : n.r), [x1, y1] = P(n.a, R_LEAF);
+      const cnt = n.more ? n.count : countLeaves(n), gapN = (n.more ? [] : allLeaves(n)).filter(l => expected.has(l.path) && !isRead(tierOf(l))).length;
+      const th = deg(n.a) - 90, flip = th > 90 && th < 270 || th < -90;
+      const key = n.more ? n.parent.path + '#all' : n.path;
+      out.push(`<path class="stem" d="M${x0.toFixed(2)},${y0.toFixed(2)}L${x1.toFixed(2)},${y1.toFixed(2)}"/>` +
+        `<g class="folder stub" data-path="${esc(n.more ? n.parent.path : n.path)}" data-expand="${esc(key)}" tabindex="0" role="button" aria-label="${esc(n.more ? n.parent.name : n.name)}: ${cnt} files not shown, expand">` +
+        `<rect class="badge${gapN ? ' gap' : ''}" x="${(x1 - 5).toFixed(2)}" y="${(y1 - 5).toFixed(2)}" width="10" height="10" rx="2.5"/>` +
+        `<text class="stub-label" transform="rotate(${th.toFixed(2)}) translate(${R_LEAF + 12},0)${flip ? ' rotate(180)' : ''}" text-anchor="${flip ? 'end' : 'start'}" dominant-baseline="central">${n.more ? '+' : ''}${cnt.toLocaleString()}</text></g>`);
+    }
 
     tree.root.children.forEach((f, i) => {
       if (f.leaf) return;
@@ -391,16 +554,16 @@
       for (const c of n.children) {
         if (c.leaf) continue;
         const [x, y] = P(c.a, c.r), rr = c.depth === 1 ? 12 : 9, cov = covOf(c), circ = 2 * Math.PI * (rr + 3);
-        const allExp = allLeaves(c).every(l => expected.has(l.path));
-        out.push(`<g class="folder${allExp ? ' exp' : ''}" data-path="${esc(c.path)}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c.name)}, ${cov.read} of ${cov.total} files opened">` +
+        const allExp = allLeaves(c).every(l => expected.has(l.path)), fiF = folderInfo(c.path);
+        out.push(`<g class="folder${allExp ? ' exp' : ''}${fiF && fiF.searched ? ' searched' : ''}" data-path="${esc(c.path)}" transform="translate(${x},${y})" tabindex="0" role="button" aria-label="${esc(c.name)}, ${cov.read} of ${cov.total} files opened">` +
           `<circle class="body" r="${rr}"/>` +
           (cov.read ? `<circle class="cov" r="${rr + 3}" transform="rotate(-90)" stroke-dasharray="${(cov.read / cov.total * circ).toFixed(2)} ${circ.toFixed(2)}"/>` : '') +
           `<text class="folder-num" style="font-size:${c.depth === 1 ? 9 : 7.5}px">${esc(c.idx)}</text></g>`);
-        folders(c);
+        if (c.open) folders(c);
       }
     })(tree.root);
 
-    for (const l of tree.leaves) {
+    for (const l of tree.visLeaves) {
       const t = tierOf(l), s = slotOf(t), [x, y] = P(l.a, l.r);
       const isExp = expected.has(l.path), gap = isExp && !isRead(t);
       const scale = Math.min(1, leafSlot / 13);
@@ -425,21 +588,26 @@
       out.push(`<g class="leaf" data-path="${esc(l.path)}" tabindex="0" role="button" aria-label="${esc(l.name)}: ${labelOf(t)}${isExp ? ', expected' : ''}">` +
         `<g transform="translate(${x},${y})"><circle class="hit" r="${Math.max(9, leafSlot / 2)}"/>${ring}${mark}${cnt}</g>${label}</g>`);
     }
-    out.push(`<g class="root"><circle r="16"/><text>VDR</text></g>`);
+    out.push(`<g class="root folder" data-path=""><circle r="16"/><text>VDR</text></g>`);
     svg.innerHTML = out.join('');
-    $('modeline').textContent = showLabels ? '' : 'Labels hidden at this density — hover a file to read its name.';
+    $('modeline').textContent = showLabels ? '' : 'Hover for names';
   }
 
   function renderLegend() {
-    const parts = [];
+    const parts = [], item = (cls, label, tip, style) => `<span title="${esc(tip || label)}"><i class="${cls}"${style ? ` style="${style}"` : ''}></i>${esc(label)}</span>`;
+    const SHORT = { untouched: 'Untouched', hit: 'Matched', read: 'Opened', cited: 'Named', retrieved: 'Retrieved', in_context: 'Read' };
     for (const t of [...TIERS].reverse()) {
-      if (t.slot === 0) parts.push(`<span><i class="hollow"></i>${esc(t.label)}</span>`);
-      else parts.push(`<span><i style="background:var(--t${t.slot})"></i>${esc(t.label)}</span>`);
-      if (t.slot === 3 && passive) parts.push(`<span><i class="half"></i>Opened in part (wedge = share read)</span>`);
+      parts.push(t.slot === 0 ? item('hollow', SHORT[t.id] || t.label, t.label) : item('', SHORT[t.id] || t.label, t.label, `background:var(--t${t.slot})`));
+      if (t.slot === 3 && passive) parts.push(item('half', 'Part read', 'Opened in part; the wedge is the share read'));
     }
-    if (data.files.some(f => f.indexed === false)) parts.push(`<span><i class="diamond"></i>${esc(UNINDEXED.label)}</span>`);
-    if (passive) parts.push(`<span><i class="named"></i>Named in the answer but never opened</span>`);
-    parts.push(`<span><i class="ring ok"></i>Expected, and opened</span><span><i class="ring"></i>Expected, not opened</span>`);
+    if (data.files.some(f => f.indexed === false)) parts.push(item('diamond', 'No text', UNINDEXED.label));
+    if (passive) {
+      parts.push(item('named', 'Named, unopened', 'Named in the answer but never opened'));
+      parts.push(item('sector', 'Searched', 'A search ran over the folder and its subfolders; the shade deepens where a subfolder was searched again'));
+      parts.push(item('arc', 'Listed', "A listing showed the folder's contents"));
+    }
+    parts.push(item('ring ok', 'Expected', 'Marked as expected, and opened'), item('ring', 'Missed', 'Marked as expected, not opened'));
+    if (tree.collapsed) parts.push(item('box', 'Collapsed', 'Files not shown because nothing happened near them; click to open'));
     $('legend').innerHTML = parts.join('');
   }
 
@@ -454,26 +622,30 @@
     const ls = tree.leaves, tiers = ls.map(tierOf), n = ls.length;
     const exp = ls.filter(l => expected.has(l.path)), expRead = exp.filter(l => isRead(tierOf(l))).length, gaps = exp.length - expRead;
     const cnt = slot => tiers.filter(t => slotOf(t) >= slot).length;
-    const tiles = [];
+    const tiles = [], all = isAll();
+    // [label, value, share, swatch, is a gap, hover detail]
     if (passive) {
-      tiles.push(['Files in room', `${n}`, isAll() ? `<small>${data.cumulative.summary.questions} questions</small>` : '', null]);
-      tiles.push([isAll() ? 'Ever listed' : 'Listed or searched', `${cnt(1)}`, `<small>${pct(cnt(1), n)}</small>`, 'var(--t1)']);
-      tiles.push([isAll() ? 'Ever matched' : 'Matched a search', `${cnt(2)}`, `<small>${pct(cnt(2), n)}</small>`, 'var(--t2)']);
-      tiles.push([isAll() ? 'Ever opened' : 'Opened', `${cnt(3)}`, `<small>${pct(cnt(3), n)}</small>`, 'var(--t3)']);
-      tiles.push([isAll() ? 'Ever named' : 'Named in answer', `${cnt(4)}`, '', 'var(--t4)']);
-      const nu = ls.filter(l => { const fi = info(l.path); return fi && (isAll() ? fi.q_named_unopened > 0 : fi.named_unopened); }).length;
-      if (nu) tiles.push(['Named, not opened', `${nu}`, '<small>check these</small>', 'var(--warn)', true]);
-      if (isAll()) tiles.push(['Never touched', `${tiers.filter(t => t === 'untouched').length}`, `<small>${pct(tiers.filter(t => t === 'untouched').length, n)}</small>`, null]);
+      tiles.push(['Files', n.toLocaleString(), '', null, false, all ? `${data.cumulative.summary.questions} questions recorded` : 'Files in the room']);
+      const reach = ls.filter(l => searchedBy(l).length), reachText = reach.filter(l => !BINARY.test(l.path)).length;
+      tiles.push(['Searched', reach.length.toLocaleString(), pct(reach.length, n), 'var(--scope)', false,
+        `Files under a folder a search ran over${all ? ', in any question' : ''}` + (reach.length !== reachText ? `; ${reach.length - reachText} of them are PDFs or other files a text search cannot read` : '')]);
+      tiles.push(['Matched', `${cnt(2)}`, pct(cnt(2), n), 'var(--t2)', false, `Returned by a search${all ? ' in any question' : ''}`]);
+      tiles.push(['Opened', `${cnt(3)}`, pct(cnt(3), n), 'var(--t3)', false, `Opened, in whole or in part${all ? ', in any question' : ''}`]);
+      tiles.push(['Named', `${cnt(4)}`, '', 'var(--t4)', false, 'Opened and named in the answer']);
+      const nu = ls.filter(l => { const fi = info(l.path); return fi && (all ? fi.q_named_unopened > 0 : fi.named_unopened); }).length;
+      if (nu) tiles.push(['Unopened, named', `${nu}`, '', 'var(--warn)', true, 'Named in the answer but never opened: check these']);
+      if (all) tiles.push(['Untouched', `${tiers.filter(t => t === 'untouched').length}`, pct(tiers.filter(t => t === 'untouched').length, n), null, false, 'Never matched or opened by any question']);
     } else {
       const indexed = tiers.filter(t => t !== 'unindexed').length;
-      tiles.push(['Files in room', `${n}`, `<small>${indexed} indexable</small>`, null]);
-      tiles.push(['Retrieved', `${cnt(1)}`, `<small>${pct(cnt(1), indexed)}</small>`, 'var(--t1)']);
-      tiles.push(['Read by model', `${cnt(3)}`, `<small>${pct(cnt(3), indexed)}</small>`, 'var(--t3)']);
-      tiles.push(['Cited', `${cnt(4)}`, '', 'var(--t4)']);
+      tiles.push(['Files', n.toLocaleString(), '', null, false, `${indexed} indexable`]);
+      tiles.push(['Retrieved', `${cnt(1)}`, pct(cnt(1), indexed), 'var(--t1)', false, 'Retrieved as a candidate']);
+      tiles.push(['Read', `${cnt(3)}`, pct(cnt(3), indexed), 'var(--t3)', false, 'Placed in the model\'s context']);
+      tiles.push(['Cited', `${cnt(4)}`, '', 'var(--t4)', false, 'Cited in the answer']);
     }
-    tiles.push(['Expected, opened', `${expRead}<small>/${exp.length}</small>`, '', null]);
-    tiles.push(['Expected, missed', `${gaps}`, exp.length ? `<small>${pct(gaps, exp.length)}</small>` : `<small>mark files to check</small>`, null, gaps > 0]);
-    $('stats').innerHTML = tiles.map(([k, v, s, sw, isGap]) => `<div class="stat${isGap ? ' gap' : ''}"><div class="k">${sw ? `<span class="sw" style="background:${sw}"></span>` : ''}${k}</div><div class="v">${v} ${s}</div></div>`).join('');
+    tiles.push(['Expected, opened', `${expRead}<small>/${exp.length}</small>`, '', null, false, 'Files you marked as expected that were opened']);
+    tiles.push(['Expected, missed', `${gaps}`, exp.length ? pct(gaps, exp.length) : '', null, gaps > 0, exp.length ? 'Files you marked as expected that were not opened' : 'Turn on Mark expected, then click the files or folders the answer should rest on']);
+    $('stats').innerHTML = tiles.map(([k, v, share, sw, isGap, tip]) =>
+      `<div class="stat${isGap ? ' gap' : ''}" title="${esc(tip)}"><div class="v">${v}${share ? ` <small>${share}</small>` : ''}</div><div class="k">${sw ? `<span class="sw" style="background:${sw}"></span>` : ''}${k}</div></div>`).join('');
   }
 
   function markNames(answer, files) {
@@ -497,7 +669,7 @@
       const ans = $('answer'); ans.className = 'answer';
       ans.innerHTML = data.questions.map((qq, i) => `${esc(qq.id.toUpperCase())}  ${esc(qq.question.slice(0, 160))}${qq.question.length > 160 ? '…' : ''}  — opened ${qq.summary.files_read ?? qq.summary.files_in_context ?? 0}, named ${qq.summary.files_cited}`).join('\n');
       $('gaphead').firstChild.textContent = 'Expected, never opened ';
-      $('gapnote').textContent = 'Files you marked as germane that no question ever opened.';
+      $('gaphead').title = 'Files you marked as germane that no question ever opened.';
       zero.hidden = false;
       const zeros = tree.leaves.filter(l => tierOf(l) === 'untouched' || tierOf(l) === 'unindexed' || !isRead(tierOf(l)));
       const never = tree.leaves.filter(l => !isRead(tierOf(l)));
@@ -518,13 +690,13 @@
         const cited = Object.entries(qq.files || {}).filter(([p, d]) => d.tier === 'cited').map(([p]) => p);
         ans.innerHTML = qq.answer ? markNames(qq.answer, cited) : '<span class="empty">(no answer recorded for this prompt — the turn may still be running, or the Stop hook did not fire)</span>';
       }
-      $('gaphead').firstChild.textContent = 'Expected but not opened ';
-      $('gapnote').textContent = 'Files you marked as germane that were never opened for this question. A file that matched a search but was not opened is the first place to look.';
+      $('gaphead').firstChild.textContent = 'Expected, not opened ';
+      $('gaphead').title = 'Files you marked as germane that were never opened for this question. A file that matched a search but was not opened is the first place to look.';
       zero.hidden = true;
     }
     const gaps = tree.leaves.filter(l => expected.has(l.path) && !isRead(tierOf(l)));
     $('gapcount').textContent = expected.size ? `${gaps.length} of ${expected.size}` : '';
-    if (!expected.size) gapsUl.innerHTML = `<li><p class="empty">No files marked yet. Click files or folders in the tree.</p></li>`;
+    if (!expected.size) gapsUl.innerHTML = `<li><p class="empty">None marked. Turn on Mark expected above the map.</p></li>`;
     else if (!gaps.length) gapsUl.innerHTML = `<li><p class="ok">Every file you marked was opened.</p></li>`;
     else gapsUl.innerHTML = gaps.map(row).join('');
 
@@ -547,6 +719,16 @@
     return s;
   }
 
+  // which searches reached a file or folder, and whether a text search could read the file
+  function scopeText(node) {
+    const by = searchedBy(node);
+    if (!by.length) return '';
+    const names = by.map(n => n.depth === 0 ? 'the whole room' : n.name);
+    let s = 'under a search of ' + names.join(', then ');
+    if (node.leaf && BINARY.test(node.path)) s += ' — but a text search does not read this file type';
+    return s;
+  }
+
   function renderDetail(leaf) {
     const box = $('detail');
     if (!leaf) { box.innerHTML = `<p class="empty">Hover or click a file in the tree.</p>`; return; }
@@ -556,12 +738,12 @@
     if (f.lines) rows.push(['Size', `${f.lines} lines`]); else if (f.pages) rows.push(['Size', `${f.pages} pages`]); else if (f.size) rows.push(['Size', `${Math.round(f.size / 1024)} KB`]);
     if (fi) {
       if (isAll()) {
-        rows.push(['Questions', `listed ${fi.q_listed} · matched ${fi.q_hit} · opened ${fi.q_read} · named ${fi.q_cited}`]);
+        rows.push(['Questions', `matched ${fi.q_hit} · opened ${fi.q_read} · named ${fi.q_cited}`]);
         if (fi.q_named_unopened) rows.push(['Warning', `named without being opened in ${fi.q_named_unopened} question${fi.q_named_unopened > 1 ? 's' : ''}`]);
         if (fi.reads) rows.push(['Opens', `${fi.reads} in total`]);
         const ft = fracText(fi, f); if (ft) rows.push(['Read', ft]);
       } else if (passive) {
-        rows.push(['Events', `listed ${fi.listed} · search hits ${fi.hits} · opened ${fi.reads}`]);
+        rows.push(['Events', `search hits ${fi.hits} · opened ${fi.reads}`]);
         const ft = fracText(fi, f); if (ft) rows.push(['Read', ft]);
         if (fi.named_unopened) rows.push(['Warning', 'the answer names this file, but nothing opened it']);
         if (fi.tools && fi.tools.length) rows.push(['Via', esc(fi.tools.join(', '))]);
@@ -571,7 +753,8 @@
         rows.push(['In context', fi.chunks_in_context ? `${fi.chunks_in_context} of ${fi.chunks_total} chunks` : 'none']);
       }
     }
-    rows.push(['Expected', expected.has(leaf.path) ? 'yes — click to unmark' : 'no — click to mark']);
+    if (passive) { const sc = scopeText(leaf); if (sc) rows.push(['Searched', sc]); }
+    rows.push(['Expected', expected.has(leaf.path) ? 'yes' : 'no']);
     box.innerHTML = `<div class="path">${esc(leaf.path)}</div><dl style="margin-top:8px">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
   }
 
@@ -607,23 +790,34 @@
   function leafFromEvent(e) { const g = e.target.closest('.leaf, .folder'); return g ? g.dataset.path : null; }
   function highlight(path, on) {
     let n = path ? (tree.map[path] || tree.leaves.find(l => l.path === path)) : null;
-    svg.querySelectorAll('.link.hi').forEach(el => el.classList.remove('hi'));
+    svg.querySelectorAll('.link.hi, .scope.hi').forEach(el => el.classList.remove('hi'));
+    if (on && n) for (const s of searchedBy(n)) { const el = svg.querySelector(`.scope[data-scope="${CSS.escape(s.path)}"]`); if (el) el.classList.add('hi'); }
     while (on && n && n.parent) { const el = svg.querySelector(`[data-link="${CSS.escape(n.path)}"]`); if (el) el.classList.add('hi'); n = n.parent; }
   }
   svg.addEventListener('mousemove', e => {
     const path = leafFromEvent(e);
-    if (!path) { tip.hidden = true; highlight(null, false); return; }
+    if (path == null) { tip.hidden = true; highlight(null, false); return; }
     const leaf = tree.leaves.find(l => l.path === path), folder = tree.map[path], box = svg.parentElement.getBoundingClientRect();
     let html;
     if (leaf) {
       const t = tierOf(leaf), fi = info(path);
       const extra = fi ? (isAll() ? ` · opened in ${fi.q_read} of ${data.cumulative.summary.questions}` : (passive ? (fi.reads ? ` · ${fracText(fi, leaf.file) || 'opened'}` : (fi.hits ? ` · ${fi.hits} search hit${fi.hits > 1 ? 's' : ''}` : '')) : ` · ${fi.chunks_in_context}/${fi.chunks_total} chunks in context`)) : (t === 'unindexed' ? ` · ${esc(leaf.file.reason || '')}` : '');
       const warnTxt = fi && (isAll() ? fi.q_named_unopened > 0 : fi.named_unopened) ? ' · named in the answer, never opened' : '';
-      html = `<b>${esc(strip(leaf.name))}</b><div class="p">${esc(leaf.parent.path || '/')}</div><div class="s">${labelOf(t)}${extra}${warnTxt}${expected.has(path) ? ' · expected' : ''}</div>`;
+      html = `<b>${esc(strip(leaf.name))}</b><div class="p">${esc(leaf.parent.path || '/')}</div><div class="s">${labelOf(t)}${extra}${warnTxt}${expected.has(path) ? ' · expected' : ''}${markMode ? '<br>click to ' + (expected.has(path) ? 'unmark' : 'mark') : ''}</div>`;
       renderDetail(leaf);
     } else if (folder && !folder.leaf) {
       const ls = allLeaves(folder), r = ls.filter(l => isRead(tierOf(l))).length, c = ls.filter(l => slotOf(tierOf(l)) >= 4).length;
-      html = `<b>${esc(folder.name)}</b><div class="s">${r} of ${ls.length} files opened · ${c} named · click to mark all as expected</div>`;
+      const fi = folderInfo(folder.path), bits = [];
+      if (fi && fi.searched) bits.push(isAll() ? `searched in ${fi.searched} question${fi.searched > 1 ? 's' : ''}` : `searched ${fi.searched}×` + (fi.patterns && fi.patterns.length ? ` (${fi.patterns.slice(0, 3).map(x => '“' + esc(x) + '”').join(', ')}${fi.patterns.length > 3 ? '…' : ''})` : ''));
+      const up = searchedBy(folder).filter(n => n !== folder);
+      if (up.length) bits.push('inside a search of ' + esc(up.map(n => n.depth === 0 ? 'the whole room' : n.name).join(', ')));
+      if (fi && fi.listed) bits.push(isAll() ? `listed in ${fi.listed} question${fi.listed > 1 ? 's' : ''}` : `contents listed ${fi.listed}×`);
+      const bin = ls.filter(l => BINARY.test(l.path)).length;
+      if (searchedBy(folder).length && bin) bits.push(`${bin} of ${ls.length} files are not text-searchable`);
+      const more = (e.target.closest('[data-expand]') || {}).dataset?.expand?.endsWith('#all');
+      const action = !folder.depth ? '' : markMode ? 'click to mark or unmark all its files'
+        : more ? (tree.visSet.size && allLeaves(folder).every(l => tree.visSet.has(l)) ? 'click to hide' : 'click to show all files') : folder.open ? 'click to close' : 'click to open';
+      html = `<b>${esc(folder.depth === 0 ? 'Whole room' : folder.name)}</b><div class="s">${r} of ${ls.length} files opened · ${c} named${bits.length ? '<br>' + bits.join(' · ') : ''}${action ? '<br>' + action : ''}</div>`;
     }
     tip.innerHTML = html; tip.hidden = false;
     const x = e.clientX - box.left + 14, y = e.clientY - box.top + 14;
@@ -632,14 +826,29 @@
     highlight(path, true);
   });
   svg.addEventListener('mouseleave', () => { tip.hidden = true; highlight(null, false); if (pinned) renderDetail(tree.leaves.find(l => l.path === pinned) || null); });
-  svg.addEventListener('click', e => { const p = leafFromEvent(e); if (p) toggle(p); });
-  svg.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { const p = leafFromEvent(e); if (p) { e.preventDefault(); toggle(p); } } });
+  function activate(e) {
+    const g = e.target.closest('.leaf, .folder'); if (!g) return;
+    const path = g.dataset.path;
+    if (!path) return;  // the room itself
+    if (markMode) { toggle(path); return; }
+    if (g.classList.contains('leaf')) { pinned = path; renderDetail(tree.leaves.find(l => l.path === path)); highlight(path, true); return; }
+    const key = g.dataset.expand && g.dataset.expand.endsWith('#all') ? g.dataset.expand : path;
+    toggleOpen(key); tip.hidden = true; renderAll();
+  }
+  svg.addEventListener('click', activate);
+  svg.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(e); } });
+  $('markbtn').addEventListener('click', () => {
+    markMode = !markMode;
+    $('markbtn').setAttribute('aria-pressed', markMode);
+    $('markbtn').closest('.treebox').classList.toggle('marking', markMode);
+    $('hinttext').textContent = markMode ? 'Click files or folders to mark or unmark them' : 'Click a folder to open or close it';
+  });
 
   $('questions').addEventListener('click', e => {
     const b = e.target.closest('.qbtn'); if (!b) return;
     view = b.dataset.v === 'all' ? 'all' : +b.dataset.v; pinned = null; loadExpected(); renderQuestions(); renderAll();
   });
-  document.addEventListener('click', e => { const a = e.target.closest('.gaps a[data-path]'); if (!a) return; pinned = a.dataset.path; renderDetail(tree.leaves.find(l => l.path === pinned)); highlight(pinned, true); });
+  document.addEventListener('click', e => { const a = e.target.closest('.gaps a[data-path]'); if (!a) return; pinned = a.dataset.path; const lf = tree.leaves.find(l => l.path === pinned); if (lf && !tree.visSet.has(lf)) { reveal(lf); renderAll(); } renderDetail(lf); highlight(pinned, true); });
   $('clearbtn').addEventListener('click', () => { expected = new Set(); try { localStorage.removeItem(storeKey()); } catch (e) { } renderAll(); });
   $('exportbtn').addEventListener('click', () => { $('pastein').value = JSON.stringify({ [isAll() ? 'all' : q().id]: [...expected] }, null, 1); });
   $('loadbtn').addEventListener('click', () => { try { setData(JSON.parse($('pastein').value)); } catch (err) { $('loaderr').textContent = 'That is not valid coverage JSON: ' + err.message; } });
@@ -652,16 +861,14 @@
 
   function setData(d, isDemo) {
     if (!d || !Array.isArray(d.files) || !Array.isArray(d.questions)) throw new Error('expected {files: [...], questions: [...]} from build_coverage.py');
-    data = d; view = d.questions.length ? 0 : 'all'; pinned = null;
+    data = d; view = d.questions.length ? 0 : 'all'; pinned = null; userOpen = new Set(); userClosed = new Set();
     if (!d.questions.length && !d.cumulative) throw new Error('no questions recorded yet');
     setTiers(); buildTree(); loadExpected(); renderQuestions(); renderAll();
     $('loaderr').textContent = '';
-    $('hinttext').textContent = passive
-      ? 'Each branch is a top-level folder; each leaf is a file. Color is how far the session got with the file: listed, matched, opened, named. Click a file or folder to mark it as one you expected the answer to draw on.'
-      : 'Each branch is a top-level folder; each leaf is a file. Hover for detail. Click a file or folder to mark it as one you expected the answer to draw on.';
+    $('hinttext').title = 'Each branch is a top-level folder; each leaf is a file. Leaf color is how far the session got with the file. Blue shading is where searches ran. Click a folder to open or close it; click a file for its detail. Turn on Mark expected to mark files or folders the answer should rest on.';
     $('datanote').textContent = isDemo
-      ? 'Showing the built-in example: a fictional data room (Meridian Coatings, "Project Lantern") with a recorded session of three questions. Load your own coverage.json to replace it.'
-      : `Loaded ${d.files.length} files and ${d.questions.length} question(s). Expected marks are kept in this browser only.`;
+      ? 'Built-in example (fictional data room).'
+      : `${d.files.length} files · ${d.questions.length} question(s). Marks stay in this browser.`;
   }
 
   let demo = null;
