@@ -18,7 +18,7 @@ Everything is invented: companies, counterparties, numbers, and the recorded ses
 
 1. `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/build_coverage.py ${CLAUDE_PLUGIN_ROOT}/examples/lantern/store -o <out>/coverage.json --expect-file ${CLAUDE_PLUGIN_ROOT}/examples/lantern/expected.json`
 2. `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/render_viewer.py <out>/coverage.json -o <out>/coverage.html --standalone --summary`
-3. Present the summary as printed, then one line per question: q1, the credit agreement was opened to its first eight lines (42%) and the answer says so; q2, the loss runs and the sales tax audit were listed and never opened; q3, the answer names the RCRA registration without opening it and the map flags it; all questions, 40 of 63 files never opened. Deliver the map as `show` does.
+3. Present the summary as printed, then one line per question: q1, the credit agreement was opened to its first eight lines (42%) and the answer says so; q2, the loss runs and the sales tax audit sat in searched folders and were never matched or opened; q3, the answer names the RCRA registration without opening it and the map flags it; all questions, 40 of 63 files never opened. Deliver the map as `show` does.
 4. Close: on a real folder the recorder runs on every tool call; the expected sets in `examples/lantern/expected.json` stand in for the reviewer's.
 
 ## Live (`--live`)

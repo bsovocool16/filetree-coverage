@@ -3,8 +3,8 @@
 A Claude plugin that maps a folder of documents and then records, passively, what a session does with its files. Map
 the folder once; work as usual (ask questions, let Claude search, read, spawn subagents, however it likes); then draw the
 map. The map is a radial file tree, one branch per top-level folder and one leaf per file, colored by how far the
-session got with each file for a given question: listed or searched, matched a search, opened (and how much of it),
-named in the answer. A cumulative view shows the same across every question asked, and lists the files nothing has ever
+session got with each file for a given question: matched a search, opened (and how much of it), named in the answer;
+the folders it searched or listed are shaded beneath the files. A cumulative view shows the same across every question asked, and lists the files nothing has ever
 opened. The reviewer marks the files an answer should have rested on, and the page lists the ones it never reached.
 
 It is a filetree retrieval audit. The first use is data-room diligence, where "did it look at the credit agreement?"
@@ -78,13 +78,15 @@ built in, and `chronology.md` there is the output a test session produced from i
 
 | mark | meaning |
 |---|---|
-| hollow | not touched: no tool call reached it |
-| light green | listed or searched: appeared in a listing, or a search ran over its folder without matching it |
+| hollow | not matched or opened |
 | green | matched a search |
 | dark green (wedge = share read) | opened; a partial read shows the share of lines or pages |
 | darkest green, white core | named in the answer, and opened |
 | amber dashed ring | named in the answer but never opened: check it |
 | red ring | marked as expected by the reviewer, not opened |
+| blue sector | a search ran over the folder; it covers the subfolders, and the shade deepens where a subfolder was searched again |
+| grey arc inside a folder's files | a listing showed the folder's contents |
+| small box with a count | a collapsed folder in a room over 400 files: nothing happened in it; click to open |
 | number beside a leaf (cumulative view) | opened in that many questions |
 
 `references/tiers.md` has the definitions, the limits (Bash parsing is heuristic; "named" is a name match; text searches
@@ -137,6 +139,8 @@ filetree-coverage/                  the plugin
   references/tiers.md               tier definitions, limits, ledger and JSON shapes
   examples/lantern/                 questions, expected sets, and the recorded session (store/)
   examples/halcyon/                 the chronology scan output and a worked chronology for the financing set
+  tests/                            recorder-to-coverage tests on Claude Code-shaped hook payloads
+                                    (`python3 -m unittest discover tests`, from the plugin folder)
 ```
 
 ## License
