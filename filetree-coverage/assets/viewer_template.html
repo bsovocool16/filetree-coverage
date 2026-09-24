@@ -47,6 +47,7 @@
   header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; margin-bottom: 14px; }
   header.top h1 { font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
   header.top .meta { color: var(--ink-2); font-size: 13px; }
+  header.top .theme { margin-left: auto; }
   header.top .meta code { font-family: var(--mono); font-size: 12px; color: var(--ink); }
 
   .questions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
@@ -190,6 +191,7 @@
   <header class="top">
     <h1>Data Room Coverage</h1>
     <div class="meta" id="meta"></div>
+    <button type="button" class="sm theme" id="themebtn"></button>
   </header>
 
   <div class="questions" id="questions" aria-label="Questions"></div>
@@ -871,6 +873,20 @@
       ? 'Built-in example (fictional data room).'
       : `${d.files.length} files · ${d.questions.length} question(s). Marks stay in this browser.`;
   }
+
+  // light / dark: follows the system until the viewer picks one; the pick is remembered in this browser
+  const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const theme = () => document.documentElement.dataset.theme || (darkQuery.matches ? 'dark' : 'light');
+  function syncThemeBtn() { $('themebtn').textContent = theme() === 'dark' ? 'Light mode' : 'Dark mode'; }
+  try { const t = localStorage.getItem('filetree-coverage:theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) { }
+  $('themebtn').addEventListener('click', () => {
+    const next = theme() === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('filetree-coverage:theme', next); } catch (e) { }
+    syncThemeBtn();
+  });
+  darkQuery.addEventListener('change', syncThemeBtn);
+  syncThemeBtn();
 
   let demo = null;
   try { demo = JSON.parse($('demo-data').textContent); } catch (e) { demo = null; }
