@@ -151,11 +151,15 @@ def paths_in_text(text: str, root: Path, cwd: str) -> list[str]:
     if base is not None:
         for line in text.splitlines():
             line = line.strip()
-            if not line or len(line) > 255:
+            if not line:
                 continue
-            # grep-style "path:line:text" or "path:text", or a bare path line
+            # grep-style "path:line:text", "path-line-text" (-C context) or "path:text", or a bare path line;
+            # take the path off first, since match lines often run past 255 characters
             head = re.split(r":\d+[:-]|:(?=\S)", line, maxsplit=1)[0].strip()
-            for cand in (head, line):
+            ctx = re.split(r"-\d+-", line, maxsplit=1)[0].strip()
+            for cand in (head, ctx, line):
+                if not cand or len(cand) > 255:
+                    continue
                 q = resolve(cand, str(base))
                 if q is None:
                     continue
