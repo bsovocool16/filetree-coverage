@@ -193,6 +193,24 @@ def paths_in_command(cmd: str, root: Path, cwd: str) -> list[str]:
     return sorted(found)
 
 
+def shell_segments(cmd: str) -> list[list[str]]:
+    """The command split at |, &&, ; and ||, quote-aware (a grep pattern's "a|b" stays whole)."""
+    try:
+        lex = shlex.shlex(cmd, posix=True, punctuation_chars=True)
+        lex.whitespace_split = True
+        toks = list(lex)
+    except ValueError:
+        return []
+    segs, cur = [], []
+    for t in toks:
+        if t and set(t) <= set("|&;"):
+            segs.append(cur); cur = []
+        else:
+            cur.append(t)
+    segs.append(cur)
+    return [s for s in segs if s]
+
+
 def lines_as_files(out: str, root: Path, dirs: list[str], cwd: str) -> list[str]:
     """Output lines of ls/find resolved against the listed folders, then the shell's cwd."""
     found = set()
@@ -300,8 +318,26 @@ def handle_tool(payload: dict, rooms):
                 eff = resolve(m_cd.group(1).strip("\"'"), cwd)
                 if eff is not None and (eff == root or under(eff, root) is not None):
                     cwd = str(eff)
-            mentioned = paths_in_command(cmd, root, cwd)       # room paths named in the command ("" = the room itself)
+            # a `cd` target moves the shell; it is not a folder the command searched or listed
+            cmd_args = re.sub(r"(?:^|(?<=&&)|(?<=;)|(?<=\|))\s*cd\s+(\"[^\"]+\"|'[^']+'|\S+)\s*(?:&&|;)?", " ", cmd)
+            mentioned = paths_in_command(cmd_args, root, cwd)  # room paths named in the command ("" = the room itself)
             dirs = [m for m in mentioned if m == "" or is_dir(root / m)]
+            # a search's scope is what its own segment names, not what other commands in the chain name
+            grep_named = set()
+            for seg in shell_segments(cmd_args):
+                if seg and os.path.basename(seg[0]) in GREP_VERBS:
+                    for t in seg[1:]:
+                        if t.startswith("-"):
+                            continue
+                        q = resolve(t, cwd)
+                        rel = under(q, root) if q is not None else None
+                        if rel and exists(root / rel):
+                            grep_named.add(rel)
+                        elif q == root:
+                            grep_named.add("")
+            grep_named = sorted(grep_named)
+            grep_dirs = [m for m in grep_named if m == "" or is_dir(root / m)]
+            grep_files = [m for m in grep_named if m and is_file(root / m)]
             files = [m for m in mentioned if m and is_file(root / m)]
             in_out = paths_in_text(out, root, cwd)             # room paths that appeared in the output
             out_files = sorted(set([f for f in in_out if is_file(root / f)] + lines_as_files(out, root, [d for d in dirs if d], cwd)))
@@ -309,7 +345,7 @@ def handle_tool(payload: dict, rooms):
             verbs = {os.path.basename(seg.strip().split()[0]) for seg in re.split(r"\||&&|;", cmd) if seg.strip()}
             if verbs & set(GREP_VERBS):
                 # the search looked at every text file in its scope, and surfaced the ones in the output
-                for sc in dirs or ([""] if shell_in_room else []):
+                for sc in grep_dirs + grep_files or ([""] if shell_in_room else []):
                     ev.append({**base, "type": "scanned", "scope": sc, "pattern": None, "via": "bash"})
                 if out_files:
                     ev.append({**base, "type": "hit", "files": out_files, "via": "bash"})

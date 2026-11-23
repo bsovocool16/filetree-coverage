@@ -134,6 +134,27 @@ class CoverageTest(unittest.TestCase):
         self.assertEqual(q["summary"]["files_in_searched_folders"], 6)
         self.assertEqual(q["summary"]["files_in_searched_folders_text"], 5)  # the PDF is not text-searchable
 
+    def test_bash_grep_from_the_room_top_scopes_to_what_it_named(self):
+        # the shape a live session used: cd into the room, then grep -C over one folder and two files,
+        # with a pattern holding "|" and match lines far past 255 characters
+        r = self.room
+        r.prompt("q")
+        credit = "03 Contracts/3.4 Financing/3.4.01 Credit Agreement.txt"
+        supply = "03 Contracts/3.1 Customers/3.1.01 Supply Agreement - Halvorsen.txt"
+        lit = "06 Litigation/6.01 Litigation Schedule.txt"
+        charter = "01 Corporate/1.01 Charter.txt"
+        long_text = "Change of Control " + "x" * 300
+        cmd = (f'cd "{r.root}" && wc -c "03 Contracts"/*/* ; '
+               f'grep -rniE -C2 "change of control|assign" "03 Contracts/3.4 Financing" "{lit}" "{charter}"')
+        out = (f"{credit}-1-line 1\n{credit}:2:{long_text}\n--\n"
+               f"{lit}:3:{long_text}\n{charter}:4:{long_text}\n")
+        r.hook("PostToolUse", tool_name="Bash", tool_input={"command": cmd}, tool_response={"stdout": out, "stderr": ""})
+        q = r.coverage()["questions"][0]
+        self.assertEqual(set(q["files"]), {credit, lit, charter})  # every match line counts, however long
+        self.assertNotIn(supply, q["files"])  # wc's paths are not search hits
+        searched = {p for p, d in q["folders"].items() if d["searched"]}
+        self.assertEqual(searched, {"03 Contracts/3.4 Financing"})  # not the room the shell moved into
+
     def test_listing_marks_the_folder(self):
         r = self.room
         r.prompt("q")
